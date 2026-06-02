@@ -1,0 +1,22 @@
+{
+  "name": "Trio EV Attendance",
+  "short_name": "Trio EV",
+  "description": "Attendance management for Try Evolution India Pvt Ltd",
+  "start_url": "/trio-ev-attendance/",
+  "display": "standalone",
+  "background_color": "#0F6E56",
+  "theme_color": "#0F6E56",
+  "orientation": "portrait",
+  "icons": [
+    {
+      "src": "icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}
