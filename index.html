@@ -563,16 +563,12 @@ async function api(params) {
   return new Promise((resolve) => {
     const cbName = 'cb_' + Math.random().toString(36).slice(2);
     const timeout = setTimeout(() => {
-      delete window[cbName];
-      const s = document.getElementById(cbName);
-      if (s) s.remove();
+      try { delete window[cbName]; document.getElementById(cbName)?.remove(); } catch(e){}
       resolve({ success: false, error: 'Request timed out. Check your connection.' });
-    }, 15000);
+    }, 20000);
     window[cbName] = function(data) {
       clearTimeout(timeout);
-      delete window[cbName];
-      const s = document.getElementById(cbName);
-      if (s) s.remove();
+      try { delete window[cbName]; document.getElementById(cbName)?.remove(); } catch(e){}
       resolve(data);
     };
     const p = Object.assign({}, params, { callback: cbName });
@@ -582,11 +578,10 @@ async function api(params) {
     script.src = url;
     script.onerror = function() {
       clearTimeout(timeout);
-      delete window[cbName];
-      script.remove();
+      try { delete window[cbName]; script.remove(); } catch(e){}
       resolve({ success: false, error: 'Network error. Check your connection.' });
     };
-    document.head.appendChild(script);
+    document.body.appendChild(script);
   });
 }
 
@@ -649,14 +644,13 @@ function checkInviteToken() {
   const params = new URLSearchParams(window.location.search);
   const token = params.get('invite');
   if (!token) return;
+  // Don't show network errors for background invite check
   api({ action: 'acceptAdminInvite', token }).then(r => {
     if (r.success) {
       toast('Admin access granted! You can now sign in with ' + r.email);
-    } else {
-      toast('Invite error: ' + r.error);
     }
     window.history.replaceState({}, '', window.location.pathname);
-  });
+  }).catch(() => {});
 }
 
 // ============================================================
@@ -684,7 +678,8 @@ async function sendOTP() {
     errEl.textContent = 'Enter a valid email address.'; errEl.classList.remove('hidden'); return;
   }
   setLoading('btn-send-otp', true, 'Send OTP');
-  const r = await api({ action: 'sendOTP', email });
+  let r;
+  try { r = await api({ action: 'sendOTP', email }); } catch(e) { r = { success: false, error: 'Network error. Please try again.' }; }
   setLoading('btn-send-otp', false, 'Send OTP');
   if (!r.success) { errEl.textContent = r.error; errEl.classList.remove('hidden'); return; }
   currentEmail = email;
