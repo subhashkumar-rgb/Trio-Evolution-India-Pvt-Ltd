@@ -1300,7 +1300,10 @@ function statusBadge(status) {
 // INIT
 // ============================================================
 window.addEventListener('DOMContentLoaded', () => {
-  // Only check invite token if ?invite= is in URL, silently
+  // Clear any cached error state on load
+  const errEl = document.getElementById('login-err');
+  if (errEl) { errEl.textContent = ''; errEl.classList.add('hidden'); }
+  // Only check invite token if ?invite= is in URL
   const params = new URLSearchParams(window.location.search);
   if (params.get('invite')) checkInviteToken();
   const month = currentMonth();
