@@ -543,8 +543,8 @@ table.data-tbl{width:100%;border-collapse:collapse;font-size:12px;min-width:500p
 // ============================================================
 // CONFIG — REPLACE WITH YOUR VALUES
 // ============================================================
-const API_URL = '';
-const APP_URL = 'https://subhashkumar-rgb.github.io/Trio-Evolution-India-Pvt-Ltd';
+const API_URL = 'YOUR_APPS_SCRIPT_WEB_APP_URL_HERE';
+const APP_URL = 'https://YOUR_GITHUB_USERNAME.github.io/trio-ev-attendance';
 
 // ============================================================
 // STATE
@@ -562,8 +562,12 @@ let clockInterval = null;
 async function api(params) {
   try {
     const url = API_URL + '?' + new URLSearchParams(params).toString();
-    const res = await fetch(url);
-    return await res.json();
+    const res = await fetch(url, {
+      method: 'GET',
+      redirect: 'follow'
+    });
+    const text = await res.text();
+    return JSON.parse(text);
   } catch (e) {
     return { success: false, error: 'Network error. Check your connection.' };
   }
