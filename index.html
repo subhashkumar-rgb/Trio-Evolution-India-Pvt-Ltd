@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">api
+<meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
@@ -565,7 +565,7 @@ async function api(params) {
     const timeout = setTimeout(() => {
       try { delete window[cbName]; document.getElementById(cbName)?.remove(); } catch(e){}
       resolve({ success: false, error: 'Request timed out. Check your connection.' });
-    }, 20000);
+    }, 25000);
     window[cbName] = function(data) {
       clearTimeout(timeout);
       try { delete window[cbName]; document.getElementById(cbName)?.remove(); } catch(e){}
@@ -579,7 +579,10 @@ async function api(params) {
     script.onerror = function() {
       clearTimeout(timeout);
       try { delete window[cbName]; script.remove(); } catch(e){}
-      resolve({ success: false, error: 'Network error. Check your connection.' });
+      // Try fetch as fallback
+      fetch(url.replace('&callback='+cbName,''), {method:'GET', redirect:'follow'})
+        .then(r => r.text()).then(t => { try { resolve(JSON.parse(t)); } catch(e) { resolve({success:false,error:'Parse error'}); }})
+        .catch(() => resolve({ success: false, error: 'Network error. Check your connection.' }));
     };
     document.body.appendChild(script);
   });
@@ -1297,7 +1300,9 @@ function statusBadge(status) {
 // INIT
 // ============================================================
 window.addEventListener('DOMContentLoaded', () => {
-  checkInviteToken();
+  // Only check invite token if ?invite= is in URL, silently
+  const params = new URLSearchParams(window.location.search);
+  if (params.get('invite')) checkInviteToken();
   const month = currentMonth();
   document.getElementById('emp-hist-month').value = month;
   document.getElementById('emp-sch-month').value = month;
