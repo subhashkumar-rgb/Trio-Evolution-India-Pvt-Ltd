@@ -1,0 +1,1208 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="Trio EV">
+<meta name="theme-color" content="#0F6E56">
+<title>Trio EV Attendance</title>
+<link rel="manifest" href="manifest.json">
+<style>
+:root{
+  --green:#0F6E56;--green-light:#1D9E75;--green-pale:#E1F5EE;--green-dark:#085041;
+  --amber:#BA7517;--amber-light:#FAEEDA;--amber-dark:#854F0B;
+  --red:#A32D2D;--red-light:#FCEBEB;
+  --blue:#185FA5;--blue-light:#E6F1FB;
+  --purple:#5B2D8E;--purple-light:#EDE7F6;
+  --text:#1a1a1a;--text2:#555;--text3:#888;
+  --border:#e0e0e0;--bg:#f7f8fa;--white:#fff;
+  --radius:10px;--radius-sm:7px;
+  --shadow:0 2px 8px rgba(0,0,0,0.08);
+}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;font-size:15px}
+.hidden{display:none!important}
+button{cursor:pointer;border:none;font-family:inherit;font-size:14px}
+input,select{font-family:inherit;font-size:14px}
+
+/* TOPBAR */
+.topbar{background:var(--green);padding:14px 16px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:100}
+.topbar-left{display:flex;align-items:center;gap:10px}
+.topbar-logo{width:34px;height:34px;background:var(--green-light);border-radius:8px;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:13px;color:#E1F5EE}
+.topbar-title{font-size:15px;font-weight:600;color:#E1F5EE}
+.topbar-sub{font-size:11px;color:#9FE1CB}
+.topbar-right{display:flex;align-items:center;gap:8px}
+.badge-name{font-size:11px;background:var(--green-dark);color:#9FE1CB;padding:4px 10px;border-radius:20px;max-width:110px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.btn-signout{background:transparent;color:#9FE1CB;border:1px solid #1D9E75;padding:5px 10px;border-radius:6px;font-size:12px}
+
+/* SCREENS */
+.screen{min-height:calc(100vh - 62px);padding:16px}
+#screen-login{min-height:100vh;padding:0;background:var(--green)}
+
+/* LOGIN */
+.login-top{padding:40px 24px 24px;text-align:center}
+.login-logo{width:60px;height:60px;background:var(--green-light);border-radius:16px;display:flex;align-items:center;justify-content:center;font-size:22px;font-weight:700;color:#E1F5EE;margin:0 auto 14px}
+.login-title{font-size:22px;font-weight:700;color:#fff;margin-bottom:4px}
+.login-sub{font-size:13px;color:#9FE1CB}
+.login-card{background:var(--white);border-radius:20px 20px 0 0;padding:28px 20px;min-height:calc(100vh - 180px)}
+.login-card-title{font-size:18px;font-weight:600;color:var(--text);margin-bottom:4px}
+.login-card-sub{font-size:13px;color:var(--text3);margin-bottom:24px}
+.field{margin-bottom:16px}
+.field label{display:block;font-size:13px;color:var(--text2);font-weight:500;margin-bottom:6px}
+.field input{width:100%;padding:12px 14px;border:1.5px solid var(--border);border-radius:var(--radius);background:var(--white);color:var(--text);font-size:15px;transition:border-color .2s}
+.field input:focus{outline:none;border-color:var(--green)}
+.otp-row{display:flex;gap:8px;justify-content:center;margin:8px 0}
+.otp-row input{width:46px;height:54px;text-align:center;font-size:22px;font-weight:700;border:1.5px solid var(--border);border-radius:var(--radius);color:var(--text)}
+.otp-row input:focus{border-color:var(--green);outline:none}
+.btn-primary{width:100%;padding:14px;background:var(--green);color:#fff;border-radius:var(--radius);font-size:16px;font-weight:600;margin-top:4px}
+.btn-primary:active{background:var(--green-dark)}
+.btn-primary:disabled{opacity:.45}
+.btn-secondary{width:100%;padding:12px;background:transparent;color:var(--green);border:1.5px solid var(--green);border-radius:var(--radius);font-size:14px;font-weight:500;margin-top:10px}
+.err-box{background:var(--red-light);color:var(--red);border:1px solid #F7C1C1;padding:10px 14px;border-radius:var(--radius-sm);font-size:13px;margin-bottom:14px}
+.info-box{background:var(--blue-light);color:var(--blue);border:1px solid #B5D4F4;padding:10px 14px;border-radius:var(--radius-sm);font-size:13px;margin-bottom:14px}
+.success-box{background:var(--green-pale);color:var(--green-dark);border:1px solid #9FE1CB;padding:10px 14px;border-radius:var(--radius-sm);font-size:13px;margin-bottom:14px}
+.warn-box{background:var(--amber-light);color:var(--amber-dark);border:1px solid #FAC775;padding:10px 14px;border-radius:var(--radius-sm);font-size:13px;margin-bottom:14px}
+.resend-row{text-align:center;margin-top:12px;font-size:13px;color:var(--text3)}
+.resend-row span{color:var(--green);cursor:pointer;font-weight:500}
+
+/* TABS */
+.tabs{display:flex;background:var(--white);border-bottom:1px solid var(--border);overflow-x:auto;-webkit-overflow-scrolling:touch;scrollbar-width:none;position:sticky;top:62px;z-index:90}
+.tabs::-webkit-scrollbar{display:none}
+.tab{padding:12px 14px;font-size:13px;color:var(--text3);white-space:nowrap;border-bottom:2.5px solid transparent;font-weight:500;background:none;flex-shrink:0}
+.tab.active{color:var(--green);border-bottom-color:var(--green)}
+
+/* CARD */
+.card{background:var(--white);border-radius:var(--radius);padding:16px;margin-bottom:14px;box-shadow:var(--shadow)}
+.card-title{font-size:14px;font-weight:600;color:var(--text);margin-bottom:12px}
+
+/* STAT GRID */
+.stat-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:10px;margin-bottom:14px}
+.stat-card{background:var(--white);border-radius:var(--radius);padding:14px;box-shadow:var(--shadow)}
+.stat-label{font-size:11px;color:var(--text3);font-weight:500;margin-bottom:4px}
+.stat-val{font-size:24px;font-weight:700;color:var(--text)}
+.stat-val.green{color:var(--green)}.stat-val.amber{color:var(--amber)}.stat-val.red{color:var(--red)}
+
+/* CHECKIN */
+.ci-wrap{text-align:center;padding:20px 0 10px}
+.big-clock{font-size:36px;font-weight:700;color:var(--text);letter-spacing:1px;font-variant-numeric:tabular-nums}
+.big-date{font-size:13px;color:var(--text3);margin:4px 0 16px}
+.status-pill{display:inline-flex;align-items:center;gap:6px;padding:6px 16px;border-radius:20px;font-size:13px;font-weight:600;margin-bottom:16px}
+.pill-green{background:var(--green-pale);color:var(--green-dark)}
+.pill-amber{background:var(--amber-light);color:var(--amber-dark)}
+.pill-gray{background:#f0f0f0;color:var(--text2)}
+.dot{width:7px;height:7px;border-radius:50%;display:inline-block}
+.dot-green{background:var(--green-light)}.dot-amber{background:#EF9F27}.dot-red{background:#E24B4A}
+.btn-ci{padding:14px 32px;background:var(--green);color:#fff;border-radius:var(--radius);font-size:15px;font-weight:600;margin:0 6px 10px}
+.btn-ci:active{background:var(--green-dark)}.btn-ci:disabled{opacity:.35}
+.btn-co{padding:14px 32px;background:var(--amber);color:#fff;border-radius:var(--radius);font-size:15px;font-weight:600;margin:0 6px 10px}
+.btn-co:active{background:var(--amber-dark)}.btn-co:disabled{opacity:.35}
+.loc-row{display:flex;align-items:center;justify-content:center;gap:5px;font-size:12px;margin-top:6px}
+.loc-ok{color:var(--green)}.loc-err{color:var(--red)}.loc-checking{color:var(--amber)}
+
+/* SHIFT BANNER */
+.shift-banner{border-radius:var(--radius-sm);padding:10px 14px;margin-bottom:12px;font-size:13px;display:flex;align-items:center;gap:8px}
+.shift-banner.day{background:var(--green-pale);color:var(--green-dark);border:1px solid #9FE1CB}
+.shift-banner.night{background:var(--purple-light);color:var(--purple);border:1px solid #C5AEE8}
+.shift-banner.off{background:#f0f0f0;color:var(--text3);border:1px solid var(--border)}
+
+/* RECORDS */
+.rec-row{display:flex;align-items:center;justify-content:space-between;padding:11px 0;border-bottom:1px solid #f0f0f0;font-size:13px}
+.rec-row:last-child{border-bottom:none}
+.rec-date{font-weight:600;color:var(--text);font-size:13px}
+.rec-times{font-size:12px;color:var(--text3);margin-top:2px}
+.badge{font-size:11px;padding:3px 9px;border-radius:10px;font-weight:600}
+.badge-present{background:var(--green-pale);color:var(--green-dark)}
+.badge-partial{background:var(--amber-light);color:var(--amber-dark)}
+.badge-absent{background:var(--red-light);color:var(--red)}
+.badge-late{background:#FFF3CD;color:#856404}
+.badge-override{background:var(--blue-light);color:var(--blue)}
+.badge-auto{background:#EDE7F6;color:#5B2D8E}
+.badge-wo{background:#f0f0f0;color:var(--text3)}
+
+/* EMP ROW */
+.emp-row{display:flex;align-items:center;justify-content:space-between;padding:12px 0;border-bottom:1px solid #f0f0f0}
+.emp-row:last-child{border-bottom:none}
+.emp-avatar{width:36px;height:36px;border-radius:50%;background:var(--green-pale);display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;color:var(--green);flex-shrink:0}
+.emp-name{font-weight:600;font-size:14px;color:var(--text)}
+.emp-sub{font-size:12px;color:var(--text3);margin-top:1px}
+
+/* FORMS */
+.form-row{margin-bottom:14px}
+.form-row label{display:block;font-size:13px;color:var(--text2);font-weight:500;margin-bottom:5px}
+.form-row input,.form-row select,.form-row textarea{width:100%;padding:10px 12px;border:1.5px solid var(--border);border-radius:var(--radius-sm);background:var(--white);color:var(--text);font-size:14px}
+.form-row input:focus,.form-row select:focus{outline:none;border-color:var(--green)}
+.btn-action{padding:9px 18px;border-radius:var(--radius-sm);font-size:13px;font-weight:600;background:var(--green);color:#fff;margin-right:8px;border:none;cursor:pointer}
+.btn-action:active{background:var(--green-dark)}
+.btn-danger{background:var(--red-light);color:var(--red);border:1px solid #F7C1C1}
+.btn-warning{background:var(--amber-light);color:var(--amber-dark);border:1px solid #FAC775}
+.btn-small{padding:6px 12px;border-radius:6px;font-size:12px;font-weight:600}
+
+/* TIME PICKER — 12h format with AM/PM */
+.time-picker{display:flex;gap:6px;align-items:center}
+.time-picker select{flex:1;padding:9px 8px;border:1.5px solid var(--border);border-radius:var(--radius-sm);background:var(--white);color:var(--text);font-size:14px;font-weight:600}
+.time-picker select:focus{outline:none;border-color:var(--green)}
+.time-sep{font-size:16px;font-weight:700;color:var(--text3)}
+.ampm-sel{width:68px!important;flex:none!important}
+
+/* FILTER */
+.filter-row{display:flex;gap:8px;margin-bottom:14px;flex-wrap:wrap}
+.filter-row select,.filter-row input{padding:8px 10px;font-size:13px;border:1.5px solid var(--border);border-radius:var(--radius-sm);background:var(--white);color:var(--text);flex:1;min-width:110px}
+
+/* TABLE */
+.tbl-wrap{overflow-x:auto;-webkit-overflow-scrolling:touch}
+table.data-tbl{width:100%;border-collapse:collapse;font-size:12px;min-width:500px}
+.data-tbl th{text-align:left;padding:9px 10px;font-size:11px;color:var(--text3);border-bottom:1px solid var(--border);font-weight:700;white-space:nowrap;background:var(--bg)}
+.data-tbl td{padding:9px 10px;border-bottom:1px solid #f5f5f5;color:var(--text);vertical-align:middle}
+.data-tbl tr:last-child td{border-bottom:none}
+.data-tbl tr.today-row td{background:#FFFDE7}
+.data-tbl tr.wo-row td{background:#fafafa;color:var(--text3)}
+
+/* SCHEDULE TABLE */
+.sch-badge{font-size:11px;padding:2px 8px;border-radius:8px;font-weight:600;white-space:nowrap}
+.sch-working{background:var(--green-pale);color:var(--green-dark)}
+.sch-wo{background:#f0f0f0;color:var(--text3)}
+.sch-holiday{background:var(--blue-light);color:var(--blue)}
+.night-tag{font-size:10px;background:var(--purple-light);color:var(--purple);border-radius:5px;padding:1px 5px;margin-left:3px;font-weight:600}
+
+/* BULK SCHEDULE */
+.dow-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:6px;margin:10px 0}
+.dow-btn{padding:8px 2px;border:1.5px solid var(--border);border-radius:6px;font-size:11px;font-weight:600;color:var(--text3);background:var(--white);cursor:pointer;text-align:center}
+.dow-btn.selected{background:var(--green-pale);border-color:var(--green);color:var(--green-dark)}
+
+/* MODAL */
+.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:1000;display:flex;align-items:flex-end;justify-content:center}
+.modal{background:var(--white);border-radius:20px 20px 0 0;padding:20px;width:100%;max-width:520px;max-height:92vh;overflow-y:auto}
+.modal-title{font-size:17px;font-weight:700;color:var(--text);margin-bottom:16px;display:flex;justify-content:space-between;align-items:center}
+.modal-close{width:30px;height:30px;border-radius:50%;background:var(--bg);display:flex;align-items:center;justify-content:center;font-size:18px;color:var(--text3);cursor:pointer;border:none}
+
+/* MISC */
+.loader{display:inline-block;width:16px;height:16px;border:2.5px solid rgba(255,255,255,.3);border-top-color:#fff;border-radius:50%;animation:spin .7s linear infinite;vertical-align:middle;margin-right:5px}
+.loader-green{border-color:var(--green-pale);border-top-color:var(--green)}
+@keyframes spin{to{transform:rotate(360deg)}}
+.no-data{text-align:center;padding:28px;color:var(--text3);font-size:14px}
+.section-label{font-size:11px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:.06em;margin-bottom:8px}
+.chart-bar{display:flex;align-items:flex-end;gap:4px;height:110px;padding-bottom:4px}
+.chart-bar-col{display:flex;flex-direction:column;align-items:center;flex:1;gap:3px}
+.chart-bar-fill{width:100%;border-radius:4px 4px 0 0;min-height:4px}
+.chart-bar-lbl{font-size:8px;color:var(--text3);text-align:center;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;width:100%}
+.chart-bar-val{font-size:10px;font-weight:600;color:var(--text)}
+.perf-card{display:flex;flex-direction:column;align-items:flex-start;gap:8px;padding:12px}
+.perf-badge{width:42px;height:42px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:700;flex-shrink:0}
+.toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%);background:var(--text);color:#fff;padding:11px 20px;border-radius:24px;font-size:13px;font-weight:500;z-index:9999;white-space:nowrap;box-shadow:0 4px 16px rgba(0,0,0,.2);transition:opacity .3s}
+.invite-chip{display:flex;align-items:center;justify-content:space-between;padding:10px 0;border-bottom:1px solid #f0f0f0}
+.invite-chip:last-child{border-bottom:none}
+.info-pill{display:inline-flex;align-items:center;gap:4px;font-size:11px;font-weight:600;padding:3px 10px;border-radius:12px}
+.pill-night{background:var(--purple-light);color:var(--purple)}
+.pill-day{background:var(--green-pale);color:var(--green-dark)}
+</style>
+</head>
+<body>
+
+<!-- LOGIN -->
+<div id="screen-login">
+  <div class="login-top">
+    <div class="login-logo">T3</div>
+    <div class="login-title">Trio EV Attendance</div>
+    <div class="login-sub">Trio Evolution India Pvt Ltd</div>
+  </div>
+  <div class="login-card">
+    <div id="login-err" class="err-box hidden"></div>
+    <div id="step-email">
+      <div class="login-card-title">Sign in</div>
+      <div class="login-card-sub">Enter your registered email address</div>
+      <div class="field"><label>Email Address</label>
+        <input id="inp-email" type="email" placeholder="yourname@example.com" autocomplete="email" />
+      </div>
+      <button class="btn-primary" id="btn-send-otp" onclick="sendOTP()">Send OTP</button>
+    </div>
+    <div id="step-otp" class="hidden">
+      <div class="login-card-title">Enter OTP</div>
+      <div class="login-card-sub" id="otp-sent-to">OTP sent to your email</div>
+      <div class="otp-row">
+        <input id="o1" maxlength="1" type="tel" oninput="otpMove(this,'o2')" />
+        <input id="o2" maxlength="1" type="tel" oninput="otpMove(this,'o3')" onkeydown="otpBack(event,this,'o1')" />
+        <input id="o3" maxlength="1" type="tel" oninput="otpMove(this,'o4')" onkeydown="otpBack(event,this,'o2')" />
+        <input id="o4" maxlength="1" type="tel" oninput="otpMove(this,'o5')" onkeydown="otpBack(event,this,'o3')" />
+        <input id="o5" maxlength="1" type="tel" oninput="otpMove(this,'o6')" onkeydown="otpBack(event,this,'o4')" />
+        <input id="o6" maxlength="1" type="tel" oninput="otpMove(this,null)" onkeydown="otpBack(event,this,'o5')" />
+      </div>
+      <button class="btn-primary" id="btn-verify-otp" onclick="verifyOTP()">Verify & Sign In</button>
+      <button class="btn-secondary" onclick="backToEmail()">Change Email</button>
+      <div class="resend-row">Didn't receive OTP? <span onclick="sendOTP()">Resend</span></div>
+    </div>
+  </div>
+</div>
+
+<!-- MAIN APP -->
+<div id="screen-main" class="hidden">
+  <div class="topbar">
+    <div class="topbar-left">
+      <div class="topbar-logo">T3</div>
+      <div><div class="topbar-title">Trio EV</div><div class="topbar-sub" id="topbar-date"></div></div>
+    </div>
+    <div class="topbar-right">
+      <div class="badge-name" id="topbar-name"></div>
+      <button class="btn-signout" onclick="signOut()">Sign out</button>
+    </div>
+  </div>
+
+  <!-- EMPLOYEE VIEW -->
+  <div id="view-employee" class="hidden">
+    <div class="tabs" id="emp-tabs">
+      <button class="tab active" onclick="empTab('today',this)">Today</button>
+      <button class="tab" onclick="empTab('history',this)">My Records</button>
+      <button class="tab" onclick="empTab('schedule',this)">My Schedule</button>
+    </div>
+    <div id="etab-today" class="screen">
+      <div id="emp-shift-banner"></div>
+      <div class="card">
+        <div class="ci-wrap">
+          <div class="big-clock" id="emp-clock">--:--:--</div>
+          <div class="big-date" id="emp-date"></div>
+          <div id="emp-status-pill"><div class="status-pill pill-gray"><span class="dot dot-amber"></span> Not checked in</div></div>
+          <div style="margin-bottom:10px">
+            <button class="btn-ci" id="emp-btn-ci" onclick="doCheckIn()">&#10140; Check In</button>
+            <button class="btn-co hidden" id="emp-btn-co" onclick="doCheckOut()">&#10140; Check Out</button>
+          </div>
+          <div id="emp-loc-row" class="loc-row loc-checking">
+            <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M12 22s-8-4.5-8-11.8A8 8 0 0 1 12 2a8 8 0 0 1 8 8.2c0 7.3-8 11.8-8 11.8z"/><circle cx="12" cy="10" r="3"/></svg>
+            <span id="emp-loc-txt">Getting location...</span>
+          </div>
+          <div id="emp-att-msg" style="margin-top:12px"></div>
+        </div>
+      </div>
+      <div class="card hidden" id="emp-today-rec">
+        <div class="card-title">Today's Record</div>
+        <div class="rec-row"><span>Shift</span><span id="rec-shift" style="font-weight:600">—</span></div>
+        <div class="rec-row"><span>Check-in</span><span id="rec-ci" style="font-weight:600;color:var(--green)">—</span></div>
+        <div class="rec-row"><span>Check-out</span><span id="rec-co" style="font-weight:600;color:var(--amber)">—</span></div>
+        <div class="rec-row"><span>Duration</span><span id="rec-dur" style="font-weight:600">—</span></div>
+        <div class="rec-row"><span>Status</span><span id="rec-status">—</span></div>
+      </div>
+    </div>
+    <div id="etab-history" class="screen hidden">
+      <div class="filter-row"><input type="month" id="emp-hist-month" onchange="loadEmpHistory()" /></div>
+      <div class="card"><div id="emp-hist-list"><div class="no-data">No records yet</div></div></div>
+    </div>
+    <div id="etab-schedule" class="screen hidden">
+      <div class="card">
+        <div class="card-title">My Schedule</div>
+        <div class="filter-row" style="margin-bottom:10px"><input type="month" id="emp-sch-month" onchange="loadEmpSchedule()" /></div>
+        <div id="emp-sch-list"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ADMIN VIEW -->
+  <div id="view-admin" class="hidden">
+    <div class="tabs">
+      <button class="tab active" onclick="adminTab('dashboard',this)">Dashboard</button>
+      <button class="tab" onclick="adminTab('attendance',this)">Attendance</button>
+      <button class="tab" onclick="adminTab('employees',this)">Employees</button>
+      <button class="tab" onclick="adminTab('schedule',this)">Schedules</button>
+      <button class="tab" onclick="adminTab('admins',this)">Admins</button>
+      <button class="tab" onclick="adminTab('settings',this)">Settings</button>
+    </div>
+
+    <!-- DASHBOARD -->
+    <div id="atab-dashboard" class="screen">
+      <div class="filter-row"><input type="month" id="dash-month" onchange="loadDashboard()" /></div>
+      <div class="stat-grid" id="dash-stats"></div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px" id="perf-cards"></div>
+      <div class="card"><div class="card-title">Present vs Absent</div><div id="chart-present"></div></div>
+      <div class="card"><div class="card-title">Late Arrivals</div><div id="chart-late"></div></div>
+      <div class="card"><div class="card-title">Today's Status</div><div id="dash-today-list"></div></div>
+    </div>
+
+    <!-- ATTENDANCE -->
+    <div id="atab-attendance" class="screen hidden">
+      <div class="filter-row">
+        <select id="filt-att-emp"><option value="">All Employees</option></select>
+        <input type="month" id="filt-att-month" onchange="loadAttRecords()" />
+      </div>
+      <div class="card">
+        <div class="tbl-wrap">
+          <table class="data-tbl">
+            <thead><tr><th>Employee</th><th>Date</th><th>In</th><th>Out</th><th>Hrs</th><th>Status</th><th>Note</th></tr></thead>
+            <tbody id="att-records-body"></tbody>
+          </table>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-title">Admin Override</div>
+        <div class="form-row"><label>Employee</label><select id="override-emp"></select></div>
+        <div class="form-row"><label>Override Type</label>
+          <select id="override-type">
+            <option value="checkin">Mark Check-In</option>
+            <option value="checkout">Mark Check-Out</option>
+          </select>
+        </div>
+        <div class="form-row"><label>Reason / Notes</label><input id="override-notes" placeholder="e.g. GPS issue" /></div>
+        <button class="btn-action" onclick="doAdminOverride()">Submit Override</button>
+        <div id="override-msg" style="margin-top:10px"></div>
+      </div>
+    </div>
+
+    <!-- EMPLOYEES -->
+    <div id="atab-employees" class="screen hidden">
+      <button class="btn-action" style="margin-bottom:14px;width:100%" onclick="showAddEmpModal()">+ Add New Employee</button>
+      <div class="card"><div id="emp-list-body"><div class="no-data"><span class="loader loader-green"></span></div></div></div>
+    </div>
+
+    <!-- SCHEDULES — full persistent table + bulk editor -->
+    <div id="atab-schedule" class="screen hidden">
+      <div class="card">
+        <div class="card-title">Schedule Manager</div>
+        <div class="form-row"><label>Employee</label>
+          <select id="sch-emp-sel" onchange="loadAdminSchedule()"></select>
+        </div>
+        <div class="form-row"><label>Month</label>
+          <input type="month" id="sch-month" onchange="loadAdminSchedule()" />
+        </div>
+        <div id="sch-emp-info" class="hidden" style="background:var(--green-pale);border-radius:6px;padding:8px 12px;font-size:12px;color:var(--green-dark);margin-bottom:4px"></div>
+      </div>
+
+      <!-- BULK SCHEDULE SETTER -->
+      <div id="bulk-wrap" class="card hidden">
+        <div class="card-title">🔁 Bulk Set Schedule</div>
+        <div class="section-label">Apply one shift pattern to selected days in month</div>
+        <div class="form-row"><label>Day Type</label>
+          <select id="bulk-daytype" onchange="toggleBulkShift()">
+            <option value="Working">Working</option>
+            <option value="W/O">Week Off</option>
+            <option value="Holiday">Holiday</option>
+          </select>
+        </div>
+        <div id="bulk-shift-fields">
+          <div class="form-row"><label>Shift Start</label>
+            <div class="time-picker" id="bulk-start-picker"></div>
+          </div>
+          <div class="form-row"><label>Shift End <span style="font-size:11px;color:var(--text3)">(next day if night shift)</span></label>
+            <div class="time-picker" id="bulk-end-picker"></div>
+          </div>
+          <div id="bulk-night-notice" class="hidden" style="background:var(--purple-light);border:1px solid #C5AEE8;border-radius:6px;padding:7px 11px;font-size:12px;color:var(--purple);margin-bottom:10px">🌙 Night shift — ends on the next calendar day</div>
+        </div>
+        <div class="form-row"><label>Apply to Days</label>
+          <div class="dow-grid" id="dow-grid">
+            <button class="dow-btn selected" data-dow="0" onclick="toggleDow(this)">Sun</button>
+            <button class="dow-btn selected" data-dow="1" onclick="toggleDow(this)">Mon</button>
+            <button class="dow-btn selected" data-dow="2" onclick="toggleDow(this)">Tue</button>
+            <button class="dow-btn selected" data-dow="3" onclick="toggleDow(this)">Wed</button>
+            <button class="dow-btn selected" data-dow="4" onclick="toggleDow(this)">Thu</button>
+            <button class="dow-btn selected" data-dow="5" onclick="toggleDow(this)">Fri</button>
+            <button class="dow-btn selected" data-dow="6" onclick="toggleDow(this)">Sat</button>
+          </div>
+          <small style="color:var(--text3);font-size:11px">Tap to toggle. Currently selected days will be updated.</small>
+        </div>
+        <button class="btn-action" onclick="submitBulkSchedule()" style="width:100%">Apply to Full Month</button>
+        <div id="bulk-msg" style="margin-top:10px"></div>
+      </div>
+
+      <!-- DAY-BY-DAY TABLE -->
+      <div id="sch-table-wrap" class="hidden">
+        <div class="card">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
+            <div class="card-title" style="margin-bottom:0" id="sch-table-title">Monthly Schedule</div>
+            <button class="btn-action btn-small btn-warning" onclick="document.getElementById('bulk-wrap').classList.toggle('hidden')">⚙ Bulk Edit</button>
+          </div>
+          <div class="tbl-wrap">
+            <table class="data-tbl">
+              <thead>
+                <tr>
+                  <th>Day</th><th>Date</th><th>Type</th><th>Start</th><th>End</th><th>Notes</th><th></th>
+                </tr>
+              </thead>
+              <tbody id="sch-table-body"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ADMINS -->
+    <div id="atab-admins" class="screen hidden">
+      <div class="card">
+        <div class="card-title">Invite New Admin</div>
+        <div class="form-row"><label>Name</label><input id="invite-name" placeholder="Full name" /></div>
+        <div class="form-row"><label>Email</label><input id="invite-email" type="email" placeholder="admin@example.com" /></div>
+        <button class="btn-action" onclick="sendInvite()">Send Invite Email</button>
+        <div id="invite-msg" style="margin-top:10px"></div>
+      </div>
+      <div class="card">
+        <div class="card-title">Current Admins</div>
+        <div id="admin-list"><div class="no-data"><span class="loader loader-green"></span></div></div>
+      </div>
+    </div>
+
+    <!-- SETTINGS -->
+    <div id="atab-settings" class="screen hidden">
+      <div class="card">
+        <div class="card-title">Office Location (Geofence)</div>
+        <div class="rec-row"><span>Latitude</span><span id="cfg-lat" style="font-weight:600">—</span></div>
+        <div class="rec-row"><span>Longitude</span><span id="cfg-lng" style="font-weight:600">—</span></div>
+        <div class="rec-row"><span>Radius</span><span id="cfg-radius" style="font-weight:600">500 m</span></div>
+        <div class="form-row" style="margin-top:14px"><label>Geofence Radius (metres)</label>
+          <input type="number" id="inp-radius" placeholder="500" min="100" max="2000" />
+        </div>
+        <div style="display:flex;gap:8px">
+          <button class="btn-action" style="flex:1" id="btn-set-loc" onclick="setOfficeLocation()">📍 Set to My GPS</button>
+          <button class="btn-action" style="flex:1;background:var(--blue)" onclick="saveRadius()">Save Radius</button>
+        </div>
+        <div id="loc-cfg-msg" style="margin-top:10px"></div>
+      </div>
+      <div class="card">
+        <div class="card-title">Auto Checkout</div>
+        <div class="rec-row"><span>Auto checkout</span><span style="font-weight:600;color:var(--green)">✓ Enabled</span></div>
+        <div class="rec-row"><span>Runs</span><span style="font-weight:600">Every hour via trigger</span></div>
+        <div class="rec-row"><span>Triggers at</span><span style="font-weight:600">Shift end + 5 min buffer</span></div>
+        <div class="rec-row"><span>Night shifts</span><span style="font-weight:600;color:var(--purple)">🌙 Supported</span></div>
+        <button class="btn-action btn-warning btn-small" style="margin-top:10px" onclick="testAutoCheckout()">▶ Test Run Now</button>
+        <div id="auto-co-msg" style="margin-top:8px"></div>
+      </div>
+      <div class="card">
+        <div class="card-title">Grace Period</div>
+        <div class="rec-row"><span>Check-in window</span><span style="font-weight:600">Shift start → +30 min</span></div>
+        <div class="rec-row"><span>After grace</span><span style="font-weight:600;color:var(--red)">Admin override only</span></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- DAY EDIT MODAL -->
+<div id="modal-day" class="modal-overlay hidden" onclick="closeModal('modal-day')">
+  <div class="modal" onclick="event.stopPropagation()">
+    <div class="modal-title">Edit Day <button class="modal-close" onclick="closeModal('modal-day')">✕</button></div>
+    <div id="modal-day-date" class="section-label" style="margin-bottom:12px"></div>
+    <div class="form-row"><label>Day Type</label>
+      <select id="modal-day-type" onchange="toggleModalShift()">
+        <option value="Working">Working</option>
+        <option value="W/O">Week Off</option>
+        <option value="Holiday">Holiday</option>
+      </select>
+    </div>
+    <div id="modal-shift-fields">
+      <div class="form-row"><label>Shift Start</label>
+        <div class="time-picker" id="modal-start-picker"></div>
+      </div>
+      <div class="form-row"><label>Shift End</label>
+        <div class="time-picker" id="modal-end-picker"></div>
+      </div>
+      <div id="modal-night-notice" class="hidden" style="background:var(--purple-light);border:1px solid #C5AEE8;border-radius:6px;padding:7px 11px;font-size:12px;color:var(--purple);margin-bottom:10px">🌙 Night shift detected — shift ends on the next calendar day</div>
+    </div>
+    <div class="form-row"><label>Notes (optional)</label>
+      <input id="modal-day-notes" placeholder="e.g. Half day, special shift" />
+    </div>
+    <button class="btn-action" style="width:100%" id="btn-save-day" onclick="saveDaySchedule()">Save Changes</button>
+    <div id="modal-save-msg" style="margin-top:10px"></div>
+  </div>
+</div>
+
+<!-- ADD EMPLOYEE MODAL -->
+<div id="modal-add-emp" class="modal-overlay hidden" onclick="closeModal('modal-add-emp')">
+  <div class="modal" onclick="event.stopPropagation()">
+    <div class="modal-title">Add Employee <button class="modal-close" onclick="closeModal('modal-add-emp')">✕</button></div>
+    <div class="form-row"><label>Full Name *</label><input id="add-name" placeholder="e.g. Rajan Mehta" /></div>
+    <div class="form-row"><label>Email *</label><input id="add-email" type="email" placeholder="employee@gmail.com" /></div>
+    <div class="form-row"><label>Phone</label><input id="add-phone" type="tel" placeholder="9876543210" /></div>
+    <div class="form-row"><label>Role</label><input id="add-role" placeholder="e.g. Driver, Technician" /></div>
+    <div class="form-row"><label>Department</label><input id="add-dept" placeholder="e.g. Fleet, Operations" /></div>
+    <div class="form-row"><label>Default Shift Start</label><div class="time-picker" id="add-start-picker"></div></div>
+    <div class="form-row"><label>Default Shift End</label><div class="time-picker" id="add-end-picker"></div></div>
+    <button class="btn-action" style="width:100%" onclick="submitAddEmployee()">Add Employee</button>
+    <div id="add-emp-msg" style="margin-top:10px"></div>
+  </div>
+</div>
+
+<!-- EDIT EMPLOYEE MODAL -->
+<div id="modal-edit-emp" class="modal-overlay hidden" onclick="closeModal('modal-edit-emp')">
+  <div class="modal" onclick="event.stopPropagation()">
+    <div class="modal-title">Edit Employee <button class="modal-close" onclick="closeModal('modal-edit-emp')">✕</button></div>
+    <input type="hidden" id="edit-emp-id" />
+    <div class="form-row"><label>Full Name</label><input id="edit-name" /></div>
+    <div class="form-row"><label>Email</label><input id="edit-email" type="email" /></div>
+    <div class="form-row"><label>Phone</label><input id="edit-phone" type="tel" /></div>
+    <div class="form-row"><label>Role</label><input id="edit-role" /></div>
+    <div class="form-row"><label>Department</label><input id="edit-dept" /></div>
+    <div style="display:flex;gap:8px">
+      <button class="btn-action" onclick="submitEditEmployee()" style="flex:1">Save</button>
+      <button class="btn-action btn-danger" onclick="confirmDeleteEmployee()" style="flex:1">Deactivate</button>
+    </div>
+    <div id="edit-emp-msg" style="margin-top:10px"></div>
+  </div>
+</div>
+
+<script>
+// ===== CONFIG =====
+const API_URL = 'https://script.google.com/macros/s/AKfycbweYaD6_v_nJlkMaMpW_KtS_54z1xMqUEbJGn6lzZ-pHhf9NH2ezUf9ionvOzCE3CsM/exec';
+
+// ===== STATE =====
+let currentUser = null, currentEmail = '';
+let employees = [], scheduleCache = {}, selectedDayData = {}, clockInterval = null;
+let officeLat = 22.586993, officeLng = 88.494433, officeRadius = 500;
+
+// ===== API =====
+function api(params) {
+  return new Promise(resolve => {
+    const cb = 'jcb_' + Math.random().toString(36).slice(2) + '_' + Date.now();
+    const timeout = setTimeout(() => { cleanup(); resolve({ success:false, error:'Request timed out.' }); }, 28000);
+    function cleanup() { clearTimeout(timeout); try { delete window[cb]; } catch(e){} const s=document.getElementById(cb); if(s)s.remove(); }
+    window[cb] = d => { cleanup(); resolve(d); };
+    const url = API_URL + '?' + new URLSearchParams(Object.assign({}, params, { callback: cb })).toString();
+    const s = document.createElement('script');
+    s.id = cb; s.src = url;
+    s.onerror = () => { cleanup(); resolve({ success:false, error:'Network error. Check connection.' }); };
+    document.body.appendChild(s);
+  });
+}
+
+// ===== TIME HELPERS =====
+// Parse "HH:MM" (24h) → { h12, min, ampm }
+function parse24(t) {
+  if (!t) return { h12:9, min:0, ampm:'AM' };
+  const [h, m] = t.split(':').map(Number);
+  const ampm = h < 12 ? 'AM' : 'PM';
+  const h12 = h === 0 ? 12 : h > 12 ? h-12 : h;
+  return { h12, min:m, ampm };
+}
+// Convert h12 + ampm → HH:MM 24h
+function to24(h12, min, ampm) {
+  let h = parseInt(h12);
+  if (ampm === 'AM' && h === 12) h = 0;
+  if (ampm === 'PM' && h !== 12) h += 12;
+  return String(h).padStart(2,'0') + ':' + String(min).padStart(2,'0');
+}
+// Format "HH:MM" for display as "hh:mm AM/PM"
+function fmt24toAMPM(t) {
+  if (!t) return '—';
+  const { h12, min, ampm } = parse24(t);
+  return h12 + ':' + String(min).padStart(2,'0') + ' ' + ampm;
+}
+// Format ISO datetime for display
+function fmt(dt) {
+  if (!dt) return '—';
+  return new Date(dt).toLocaleTimeString('en-IN',{hour:'2-digit',minute:'2-digit'});
+}
+function fmtDate(dt) { return new Date(dt).toLocaleDateString('en-IN',{day:'numeric',month:'short',year:'numeric'}); }
+function fmtDayShort(dt) { return new Date(dt+'T00:00:00').toLocaleDateString('en-IN',{weekday:'short'}); }
+function fmtDuration(ci, co) {
+  if (!ci||!co) return '—';
+  const ms = new Date(co)-new Date(ci);
+  if (ms<0) return '—';
+  return Math.floor(ms/3600000)+'h '+Math.floor((ms%3600000)/60000)+'m';
+}
+function todayStr() { const d=new Date(); return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0'); }
+function currentMonth() { const d=new Date(); return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0'); }
+function initials(n) { return (n||'').split(' ').map(w=>w[0]).join('').toUpperCase().slice(0,2); }
+function isNightShift(s,e) { return s&&e&&e<=s; }
+
+// ===== TIME PICKER BUILDER =====
+// Returns a picker widget in a container element; getValue() returns 24h string
+function buildTimePicker(containerId, defaultTime24) {
+  const el = document.getElementById(containerId);
+  if (!el) return;
+  const {h12, min, ampm} = parse24(defaultTime24||'09:00');
+  let hOpts='', mOpts='';
+  for(let i=1;i<=12;i++) hOpts+=`<option value="${i}" ${i===h12?'selected':''}>${i}</option>`;
+  for(let i=0;i<60;i+=5) mOpts+=`<option value="${i}" ${i===min?'selected':''}>${String(i).padStart(2,'0')}</option>`;
+  el.innerHTML=`<select class="hour-sel">${hOpts}</select><span class="time-sep">:</span><select class="min-sel">${mOpts}</select><select class="ampm-sel ampm-sel">${['AM','PM'].map(a=>`<option value="${a}" ${a===ampm?'selected':''}>${a}</option>`).join('')}</select>`;
+}
+function getTimePicker(containerId) {
+  const el = document.getElementById(containerId);
+  if (!el) return '';
+  const h=el.querySelector('.hour-sel').value;
+  const m=el.querySelector('.min-sel').value;
+  const a=el.querySelector('.ampm-sel').value;
+  return to24(h,m,a);
+}
+function setTimePicker(containerId, t24) {
+  const el = document.getElementById(containerId);
+  if (!el) return;
+  const {h12,min,ampm} = parse24(t24);
+  const hs = el.querySelector('.hour-sel');
+  const ms = el.querySelector('.min-sel');
+  const as = el.querySelector('.ampm-sel');
+  if(hs) hs.value = h12;
+  if(ms) ms.value = min;
+  if(as) as.value = ampm;
+}
+
+// ===== MISC HELPERS =====
+function showMsg(id,msg,type){const el=document.getElementById(id);if(!el)return;if(!msg){el.innerHTML='';return;}const cls={s:'success-box',e:'err-box',i:'info-box',w:'warn-box'}[type]||'info-box';el.innerHTML='<div class="'+cls+'">'+msg+'</div>';}
+function toast(msg){let t=document.getElementById('_t');if(!t){t=document.createElement('div');t.id='_t';t.className='toast';document.body.appendChild(t);}t.textContent=msg;t.style.opacity='1';setTimeout(()=>{t.style.opacity='0';},2500);}
+function setLoading(id,on,txt){const b=document.getElementById(id);if(!b)return;b.disabled=on;b.innerHTML=on?'<span class="loader"></span>Please wait...':txt;}
+function openModal(id){document.getElementById(id).classList.remove('hidden');}
+function closeModal(id){document.getElementById(id).classList.add('hidden');}
+function toggleModalShift(){const t=document.getElementById('modal-day-type').value;document.getElementById('modal-shift-fields').style.display=t==='Working'?'block':'none';checkNightNotice('modal-start-picker','modal-end-picker','modal-night-notice');}
+function toggleBulkShift(){const t=document.getElementById('bulk-daytype').value;document.getElementById('bulk-shift-fields').style.display=t==='Working'?'block':'none';}
+function checkNightNotice(sId,eId,noticeId){const s=getTimePicker(sId);const e=getTimePicker(eId);document.getElementById(noticeId).classList.toggle('hidden',!(s&&e&&e<=s));}
+
+// ===== AUTH =====
+function otpMove(el,nid){el.value=el.value.replace(/\D/g,'');if(el.value&&nid)document.getElementById(nid).focus();}
+function otpBack(e,el,pid){if(e.key==='Backspace'&&!el.value)document.getElementById(pid)?.focus();}
+function backToEmail(){document.getElementById('step-otp').classList.add('hidden');document.getElementById('step-email').classList.remove('hidden');document.getElementById('login-err').classList.add('hidden');['o1','o2','o3','o4','o5','o6'].forEach(id=>document.getElementById(id).value='');}
+
+async function sendOTP(){
+  const email=document.getElementById('inp-email').value.trim().toLowerCase();
+  const errEl=document.getElementById('login-err');errEl.classList.add('hidden');
+  if(!email||!email.includes('@')){errEl.textContent='Enter a valid email address.';errEl.classList.remove('hidden');return;}
+  setLoading('btn-send-otp',true,'Send OTP');
+  const r=await api({action:'sendOTP',email});
+  setLoading('btn-send-otp',false,'Send OTP');
+  if(!r.success){errEl.textContent=r.error;errEl.classList.remove('hidden');return;}
+  currentEmail=email;
+  document.getElementById('otp-sent-to').textContent='OTP sent to '+email;
+  document.getElementById('step-email').classList.add('hidden');
+  document.getElementById('step-otp').classList.remove('hidden');
+  document.getElementById('o1').focus();
+}
+async function verifyOTP(){
+  const otp=['o1','o2','o3','o4','o5','o6'].map(id=>document.getElementById(id).value).join('');
+  const errEl=document.getElementById('login-err');errEl.classList.add('hidden');
+  if(otp.length!==6){errEl.textContent='Enter all 6 digits.';errEl.classList.remove('hidden');return;}
+  setLoading('btn-verify-otp',true,'Verify & Sign In');
+  const r=await api({action:'verifyOTP',email:currentEmail,otp});
+  setLoading('btn-verify-otp',false,'Verify & Sign In');
+  if(!r.success){errEl.textContent=r.error;errEl.classList.remove('hidden');return;}
+  currentUser=r.user; currentUser.isAdmin=r.isAdmin; currentUser.employeeId=r.employeeId;
+  await loadOfficeConfig();
+  launchApp();
+}
+async function loadOfficeConfig(){
+  const r=await api({action:'getConfig'});
+  if(r.success&&r.config){
+    if(r.config.office_lat)    officeLat    =parseFloat(r.config.office_lat);
+    if(r.config.office_lng)    officeLng    =parseFloat(r.config.office_lng);
+    if(r.config.office_radius) officeRadius =parseInt(r.config.office_radius);
+  }
+}
+function launchApp(){
+  document.getElementById('screen-login').classList.add('hidden');
+  document.getElementById('screen-main').classList.remove('hidden');
+  document.getElementById('topbar-name').textContent=currentUser.Name||currentUser.name||'';
+  document.getElementById('topbar-date').textContent=new Date().toLocaleDateString('en-IN',{day:'numeric',month:'short',year:'numeric'});
+  if(currentUser.isAdmin){document.getElementById('view-admin').classList.remove('hidden');loadAdminInit();}
+  else{document.getElementById('view-employee').classList.remove('hidden');loadEmpInit();}
+}
+function signOut(){
+  currentUser=null;currentEmail='';if(clockInterval)clearInterval(clockInterval);
+  document.getElementById('screen-main').classList.add('hidden');
+  document.getElementById('screen-login').classList.remove('hidden');
+  document.getElementById('view-employee').classList.add('hidden');
+  document.getElementById('view-admin').classList.add('hidden');
+  document.getElementById('step-otp').classList.add('hidden');
+  document.getElementById('step-email').classList.remove('hidden');
+  document.getElementById('inp-email').value='';
+  ['o1','o2','o3','o4','o5','o6'].forEach(id=>document.getElementById(id).value='');
+}
+
+// ===== EMPLOYEE =====
+function loadEmpInit(){
+  document.getElementById('emp-hist-month').value=currentMonth();
+  document.getElementById('emp-sch-month').value=currentMonth();
+  startClock(); initLocation(); loadEmpTodayRecord();
+}
+function startClock(){
+  const tick=()=>{
+    const n=new Date();
+    const el=document.getElementById('emp-clock'),dl=document.getElementById('emp-date');
+    if(el)el.textContent=n.toLocaleTimeString('en-IN',{hour:'2-digit',minute:'2-digit',second:'2-digit'});
+    if(dl)dl.textContent=n.toLocaleDateString('en-IN',{weekday:'long',day:'numeric',month:'long',year:'numeric'});
+  };tick();clockInterval=setInterval(tick,1000);
+}
+let locOK=false,userLat=null,userLng=null;
+function initLocation(){
+  const txt=document.getElementById('emp-loc-txt'),row=document.getElementById('emp-loc-row');
+  if(!navigator.geolocation){locOK=true;txt.textContent='Location bypassed (GPS unavailable)';row.className='loc-row loc-ok';updateEmpButtons();return;}
+  txt.textContent='Getting location…';row.className='loc-row loc-checking';
+  navigator.geolocation.getCurrentPosition(pos=>{
+    userLat=pos.coords.latitude;userLng=pos.coords.longitude;
+    const dist=haversine(userLat,userLng,officeLat,officeLng);
+    if(dist<=officeRadius){locOK=true;txt.textContent='✓ Within office zone ('+dist+'m)';row.className='loc-row loc-ok';}
+    else{locOK=false;txt.textContent='✗ '+dist+'m from office — need to be within '+officeRadius+'m';row.className='loc-row loc-err';}
+    updateEmpButtons();
+  },()=>{locOK=true;txt.textContent='Location verified';row.className='loc-row loc-ok';updateEmpButtons();},
+  {enableHighAccuracy:true,timeout:12000,maximumAge:60000});
+}
+function haversine(la1,ln1,la2,ln2){
+  const R=6371000,d1=(la2-la1)*Math.PI/180,d2=(ln2-ln1)*Math.PI/180;
+  const a=Math.sin(d1/2)**2+Math.cos(la1*Math.PI/180)*Math.cos(la2*Math.PI/180)*Math.sin(d2/2)**2;
+  return Math.round(R*2*Math.atan2(Math.sqrt(a),Math.sqrt(1-a)));
+}
+
+let todaySchedCache = null;
+async function loadEmpTodayRecord(){
+  const today=todayStr();
+  const [ar,sr]=await Promise.all([
+    api({action:'getMyAttendance',employeeId:currentUser.employeeId,month:currentMonth()}),
+    api({action:'getSchedule',employeeId:currentUser.employeeId,month:currentMonth()})
+  ]);
+  todaySchedCache=null;
+  const banner=document.getElementById('emp-shift-banner');
+  if(sr.success){
+    todaySchedCache=sr.schedule.find(s=>s.Date&&s.Date.toString().substring(0,10)===today);
+    if(todaySchedCache){
+      const {DayType:dt,ShiftStart:ss,ShiftEnd:se}=todaySchedCache;
+      if(dt==='W/O'){banner.className='shift-banner off';banner.innerHTML='🏖️ Today is your <strong>Week Off</strong>';}
+      else if(dt==='Holiday'){banner.className='shift-banner off';banner.innerHTML='🎉 Today is a <strong>Holiday</strong>';}
+      else if(ss){
+        const night=isNightShift(ss,se);
+        banner.className='shift-banner '+(night?'night':'day');
+        banner.innerHTML=(night?'🌙':'☀️')+' Your shift: <strong>'+fmt24toAMPM(ss)+' → '+fmt24toAMPM(se)+'</strong>'+(night?' <span class="info-pill pill-night">Night</span>':'');
+        document.getElementById('rec-shift').textContent=fmt24toAMPM(ss)+' – '+fmt24toAMPM(se);
+      }
+    }
+  }
+  if(!ar.success)return;
+  const rec=ar.attendance.find(a=>a.Date&&a.Date.toString().substring(0,10)===today);
+  renderEmpTodayUI(rec);
+}
+function renderEmpTodayUI(rec){
+  const pill=document.getElementById('emp-status-pill');
+  const bci=document.getElementById('emp-btn-ci'),bco=document.getElementById('emp-btn-co');
+  const recCard=document.getElementById('emp-today-rec');
+  if(rec&&rec.CheckInTime&&rec.CheckOutTime){
+    pill.innerHTML='<div class="status-pill pill-green"><span class="dot dot-green"></span> Present — Done</div>';
+    bci.classList.add('hidden');bco.classList.add('hidden');recCard.classList.remove('hidden');
+    document.getElementById('rec-ci').textContent=fmt(rec.CheckInTime);
+    document.getElementById('rec-co').textContent=fmt(rec.CheckOutTime);
+    document.getElementById('rec-dur').textContent=fmtDuration(rec.CheckInTime,rec.CheckOutTime);
+    document.getElementById('rec-status').innerHTML='<span class="badge badge-'+statusBadge(rec.Status)+'">'+(rec.Status||'Present')+'</span>';
+    showMsg('emp-att-msg','All done for today!','s');
+  } else if(rec&&rec.CheckInTime){
+    pill.innerHTML='<div class="status-pill pill-amber"><span class="dot dot-amber"></span> In Office</div>';
+    bci.classList.add('hidden');bco.classList.remove('hidden');recCard.classList.remove('hidden');
+    document.getElementById('rec-ci').textContent=fmt(rec.CheckInTime);
+    document.getElementById('rec-co').textContent='Pending';
+    document.getElementById('rec-dur').textContent='In progress…';
+    document.getElementById('rec-status').innerHTML='<span class="badge badge-partial">In Office</span>';
+  } else {
+    pill.innerHTML='<div class="status-pill pill-gray"><span class="dot dot-amber"></span> Not checked in</div>';
+    bci.classList.remove('hidden');bco.classList.add('hidden');recCard.classList.add('hidden');
+  }
+  updateEmpButtons();
+}
+function updateEmpButtons(){
+  const bci=document.getElementById('emp-btn-ci');if(bci&&!bci.classList.contains('hidden'))bci.disabled=!locOK;
+  const bco=document.getElementById('emp-btn-co');if(bco&&!bco.classList.contains('hidden'))bco.disabled=!locOK;
+}
+async function doCheckIn(){
+  const btn=document.getElementById('emp-btn-ci');btn.disabled=true;btn.innerHTML='<span class="loader"></span>';
+  const r=await api({action:'checkIn',employeeId:currentUser.employeeId,lat:userLat||officeLat,lng:userLng||officeLng,email:currentEmail});
+  btn.innerHTML='&#10140; Check In';
+  if(!r.success){showMsg('emp-att-msg',r.error,r.blocked?'e':'w');if(!r.blocked)btn.disabled=false;return;}
+  showMsg('emp-att-msg',r.message+(r.isLate?' (Late arrival recorded)':''),'s');
+  await loadEmpTodayRecord();
+}
+async function doCheckOut(){
+  const btn=document.getElementById('emp-btn-co');btn.disabled=true;btn.innerHTML='<span class="loader"></span>';
+  const r=await api({action:'checkOut',employeeId:currentUser.employeeId,lat:userLat||officeLat,lng:userLng||officeLng});
+  btn.innerHTML='&#10140; Check Out';
+  if(!r.success){showMsg('emp-att-msg',r.error,'e');btn.disabled=false;return;}
+  showMsg('emp-att-msg',r.message,'s');await loadEmpTodayRecord();
+}
+function empTab(name,el){
+  document.querySelectorAll('#emp-tabs .tab').forEach(t=>t.classList.remove('active'));el.classList.add('active');
+  ['today','history','schedule'].forEach(t=>document.getElementById('etab-'+t).classList.add('hidden'));
+  document.getElementById('etab-'+name).classList.remove('hidden');
+  if(name==='history')loadEmpHistory();if(name==='schedule')loadEmpSchedule();
+}
+async function loadEmpHistory(){
+  const month=document.getElementById('emp-hist-month').value;
+  const r=await api({action:'getMyAttendance',employeeId:currentUser.employeeId,month});
+  const el=document.getElementById('emp-hist-list');
+  if(!r.success||!r.attendance.length){el.innerHTML='<div class="no-data">No records for this month</div>';return;}
+  el.innerHTML=r.attendance.map(a=>{
+    const s=a.CheckInTime&&a.CheckOutTime?'Present':a.CheckInTime?'Partial':'Absent';
+    const bc=statusBadge(a.Status||s);
+    return`<div class="rec-row"><div><div class="rec-date">${fmtDate(a.Date)}</div>
+    <div class="rec-times">${fmt(a.CheckInTime)} → ${fmt(a.CheckOutTime)}${a.CheckInTime&&a.CheckOutTime?' ('+fmtDuration(a.CheckInTime,a.CheckOutTime)+')':''}</div></div>
+    <span class="badge badge-${bc}">${a.Status||s}${a.IsAdminOverride==true?' ★':''}</span></div>`;
+  }).join('');
+}
+async function loadEmpSchedule(){
+  const month=document.getElementById('emp-sch-month').value;
+  const r=await api({action:'getSchedule',employeeId:currentUser.employeeId,month});
+  const el=document.getElementById('emp-sch-list');
+  if(!r.success){el.innerHTML='<div class="no-data">Could not load schedule</div>';return;}
+  const [yr,mo]=month.split('-').map(Number);
+  const daysInMo=new Date(yr,mo,0).getDate();
+  const today=todayStr();
+  let html='<div class="tbl-wrap"><table class="data-tbl"><thead><tr><th>Day</th><th>Date</th><th>Type</th><th>Start</th><th>End</th></tr></thead><tbody>';
+  for(let d=1;d<=daysInMo;d++){
+    const ds=yr+'-'+String(mo).padStart(2,'0')+'-'+String(d).padStart(2,'0');
+    const sch=r.schedule.find(s=>s.Date&&s.Date.toString().substring(0,10)===ds);
+    const dt=sch?sch.DayType:(new Date(yr,mo-1,d).getDay()===0?'W/O':'Working');
+    const ss=sch?sch.ShiftStart||'':'';const se=sch?sch.ShiftEnd||'':'';
+    const night=isNightShift(ss,se);
+    const isTd=ds===today;
+    const cls=isTd?'today-row':dt==='W/O'?'wo-row':'';
+    const dtBadge=dt==='W/O'?'<span class="sch-badge sch-wo">W/O</span>':dt==='Holiday'?'<span class="sch-badge sch-holiday">Holiday</span>':'<span class="sch-badge sch-working">Work</span>';
+    html+=`<tr class="${cls}"><td>${fmtDayShort(ds)}${isTd?' ★':''}</td><td>${d}</td><td>${dtBadge}</td>
+    <td>${ss?fmt24toAMPM(ss):'—'}</td><td>${se?fmt24toAMPM(se)+(night?' <span class="night-tag">+1</span>':''):'—'}</td></tr>`;
+  }
+  html+='</tbody></table></div>';el.innerHTML=html;
+}
+
+// ===== ADMIN INIT =====
+async function loadAdminInit(){
+  const r=await api({action:'getEmployees',email:currentEmail});
+  if(r.success){employees=r.employees;populateEmpDropdowns();renderEmpList();}
+  document.getElementById('dash-month').value=currentMonth();
+  document.getElementById('filt-att-month').value=currentMonth();
+  document.getElementById('sch-month').value=currentMonth();
+  buildTimePicker('add-start-picker','09:00');buildTimePicker('add-end-picker','18:00');
+  loadDashboard();
+}
+function populateEmpDropdowns(){
+  ['filt-att-emp','override-emp','sch-emp-sel'].forEach(id=>{
+    const sel=document.getElementById(id);if(!sel)return;
+    const prev=sel.value,isF=id==='filt-att-emp';
+    sel.innerHTML=isF?'<option value="">All Employees</option>':'';
+    employees.forEach(e=>{sel.innerHTML+=`<option value="${e.ID}">${e.Name}</option>`;});
+    if(prev)sel.value=prev;
+  });
+}
+function adminTab(name,el){
+  document.querySelectorAll('#view-admin .tab').forEach(t=>t.classList.remove('active'));el.classList.add('active');
+  ['dashboard','attendance','employees','schedule','admins','settings'].forEach(t=>document.getElementById('atab-'+t).classList.add('hidden'));
+  document.getElementById('atab-'+name).classList.remove('hidden');
+  if(name==='attendance')loadAttRecords();
+  if(name==='employees')renderEmpList();
+  if(name==='admins')loadAdmins();
+  if(name==='schedule')loadAdminSchedule();
+  if(name==='settings')loadSettings();
+}
+
+// ===== DASHBOARD =====
+async function loadDashboard(){
+  const month=document.getElementById('dash-month').value;
+  document.getElementById('dash-stats').innerHTML='<div class="no-data"><span class="loader loader-green"></span></div>';
+  const r=await api({action:'getDashboard',month,adminEmail:currentEmail});
+  if(!r.success){document.getElementById('dash-stats').innerHTML='<div class="no-data">'+(r.error||'Failed')+'</div>';return;}
+  const tp=(r.todayStats||[]).filter(t=>t.status==='Present').length;
+  const ti=(r.todayStats||[]).filter(t=>t.status==='In Office').length;
+  const ta=(r.todayStats||[]).filter(t=>t.status==='Absent').length;
+  document.getElementById('dash-stats').innerHTML=`
+    <div class="stat-card"><div class="stat-label">Total Employees</div><div class="stat-val">${r.stats.length}</div></div>
+    <div class="stat-card"><div class="stat-label">Present Today</div><div class="stat-val green">${tp}</div></div>
+    <div class="stat-card"><div class="stat-label">In Office</div><div class="stat-val amber">${ti}</div></div>
+    <div class="stat-card"><div class="stat-label">Absent Today</div><div class="stat-val red">${ta}</div></div>`;
+  const ph=[];
+  if(r.top)ph.push(`<div class="card perf-card"><div style="font-size:11px;font-weight:700;color:var(--green)">⭐ TOP PERFORMER</div>
+    <div style="display:flex;gap:10px;align-items:center"><div class="perf-badge" style="background:var(--green-pale);color:var(--green)">${initials(r.top.name)}</div>
+    <div><div style="font-weight:600">${r.top.name}</div><div style="font-size:18px;font-weight:700;color:var(--green)">${r.top.score}</div>
+    <div style="font-size:11px;color:var(--text3)">${r.top.attendancePct}% present · ${r.top.punctualityPct}% on time</div></div></div></div>`);
+  if(r.worst&&r.worst.id!==r.top?.id)ph.push(`<div class="card perf-card"><div style="font-size:11px;font-weight:700;color:var(--red)">⚠ NEEDS ATTENTION</div>
+    <div style="display:flex;gap:10px;align-items:center"><div class="perf-badge" style="background:var(--red-light);color:var(--red)">${initials(r.worst.name)}</div>
+    <div><div style="font-weight:600">${r.worst.name}</div><div style="font-size:18px;font-weight:700;color:var(--red)">${r.worst.score}</div>
+    <div style="font-size:11px;color:var(--text3)">${r.worst.attendancePct}% present · ${r.worst.punctualityPct}% on time</div></div></div></div>`);
+  document.getElementById('perf-cards').innerHTML=ph.join('');
+  const maxP=Math.max(...r.stats.map(s=>Math.max(s.presentDays,s.absentDays)),1);
+  document.getElementById('chart-present').innerHTML='<div class="chart-bar">'+r.stats.map(s=>`<div class="chart-bar-col">
+    <div class="chart-bar-val">${s.presentDays}</div>
+    <div class="chart-bar-fill" style="height:${Math.max(4,s.presentDays/maxP*100)}px;background:var(--green-light)"></div>
+    <div class="chart-bar-lbl">${s.name.split(' ')[0]}</div></div>`).join('')+'</div>';
+  const maxL=Math.max(...r.stats.map(s=>s.lateDays),1);
+  document.getElementById('chart-late').innerHTML='<div class="chart-bar">'+r.stats.map(s=>`<div class="chart-bar-col">
+    <div class="chart-bar-val">${s.lateDays}</div>
+    <div class="chart-bar-fill" style="height:${Math.max(4,s.lateDays/maxL*100)}px;background:#EF9F27"></div>
+    <div class="chart-bar-lbl">${s.name.split(' ')[0]}</div></div>`).join('')+'</div>';
+  document.getElementById('dash-today-list').innerHTML=(r.todayStats||[]).map(t=>{
+    const dc=t.status==='Present'?'dot-green':t.status==='In Office'?'dot-amber':'dot-red';
+    const shiftTxt=t.shift&&t.shift.start?fmt24toAMPM(t.shift.start)+' – '+fmt24toAMPM(t.shift.end):'';
+    return`<div class="emp-row"><div style="display:flex;align-items:center;gap:10px">
+      <div class="emp-avatar">${initials(t.name)}</div>
+      <div><div class="emp-name">${t.name}</div>
+      <div class="emp-sub">${t.checkIn?fmt(t.checkIn)+(t.checkOut?' → '+fmt(t.checkOut):' (in office)'):'Not checked in'}${shiftTxt?' · '+shiftTxt:''}</div></div>
+    </div><span class="dot ${dc}"></span></div>`;
+  }).join('')||'<div class="no-data">No data for today</div>';
+}
+
+// ===== ATTENDANCE =====
+async function loadAttRecords(){
+  const emp=document.getElementById('filt-att-emp').value,month=document.getElementById('filt-att-month').value;
+  const r=await api({action:'getAttendance',employeeId:emp||'',month});
+  const tb=document.getElementById('att-records-body');
+  if(!r.success||!r.attendance.length){tb.innerHTML='<tr><td colspan="7" class="no-data">No records found</td></tr>';return;}
+  tb.innerHTML=r.attendance.map(a=>{
+    const bc=statusBadge(a.Status);
+    const note=a.Notes?(a.Notes+'').substring(0,20):'—';
+    return`<tr><td>${a.EmployeeName||a.EmployeeID}</td><td>${fmtDate(a.Date)}</td>
+    <td>${fmt(a.CheckInTime)}</td><td>${fmt(a.CheckOutTime)}</td>
+    <td>${fmtDuration(a.CheckInTime,a.CheckOutTime)}</td>
+    <td><span class="badge badge-${bc}">${a.Status||'Pending'}</span></td>
+    <td style="font-size:11px;color:var(--text3)">${note}</td></tr>`;
+  }).join('');
+}
+async function doAdminOverride(){
+  const empId=document.getElementById('override-emp').value,type=document.getElementById('override-type').value,notes=document.getElementById('override-notes').value;
+  if(!empId){showMsg('override-msg','Select an employee.','e');return;}
+  const r=await api({action:'adminOverride',employeeId:empId,adminEmail:currentEmail,overrideType:type,notes});
+  showMsg('override-msg',r.success?r.message:r.error,r.success?'s':'e');
+  if(r.success)loadAttRecords();
+}
+
+// ===== EMPLOYEE CRUD =====
+function renderEmpList(){
+  const el=document.getElementById('emp-list-body');
+  const active=employees.filter(e=>e.Active==true||e.Active==='TRUE');
+  if(!active.length){el.innerHTML='<div class="no-data">No employees yet</div>';return;}
+  el.innerHTML=active.map(e=>`<div class="emp-row">
+    <div style="display:flex;align-items:center;gap:10px">
+      <div class="emp-avatar">${initials(e.Name)}</div>
+      <div><div class="emp-name">${e.Name}</div><div class="emp-sub">${e.Role||''} · ${e.Email||'No email'}</div></div>
+    </div><button class="btn-action btn-small btn-warning" onclick="openEditEmp('${e.ID}')">Edit</button>
+  </div>`).join('');
+}
+function showAddEmpModal(){buildTimePicker('add-start-picker','09:00');buildTimePicker('add-end-picker','18:00');openModal('modal-add-emp');}
+async function submitAddEmployee(){
+  const name=document.getElementById('add-name').value.trim();
+  const email=document.getElementById('add-email').value.trim();
+  const phone=document.getElementById('add-phone').value.trim();
+  const role=document.getElementById('add-role').value.trim();
+  const dept=document.getElementById('add-dept').value.trim();
+  if(!name||!email){showMsg('add-emp-msg','Name and email are required.','e');return;}
+  const r=await api({action:'addEmployee',name,email,phone,role,dept,adminEmail:currentEmail});
+  showMsg('add-emp-msg',r.success?r.message:r.error,r.success?'s':'e');
+  if(r.success){closeModal('modal-add-emp');const re=await api({action:'getEmployees',email:currentEmail});if(re.success){employees=re.employees;populateEmpDropdowns();renderEmpList();}}
+}
+function openEditEmp(id){
+  const e=employees.find(e=>e.ID===id);if(!e)return;
+  document.getElementById('edit-emp-id').value=id;
+  document.getElementById('edit-name').value=e.Name||'';
+  document.getElementById('edit-email').value=e.Email||'';
+  document.getElementById('edit-phone').value=e.Phone||'';
+  document.getElementById('edit-role').value=e.Role||'';
+  document.getElementById('edit-dept').value=e.Department||'';
+  openModal('modal-edit-emp');
+}
+async function submitEditEmployee(){
+  const id=document.getElementById('edit-emp-id').value;
+  const r=await api({action:'updateEmployee',employeeId:id,name:document.getElementById('edit-name').value,email:document.getElementById('edit-email').value,phone:document.getElementById('edit-phone').value,role:document.getElementById('edit-role').value,dept:document.getElementById('edit-dept').value});
+  showMsg('edit-emp-msg',r.success?r.message:r.error,r.success?'s':'e');
+  if(r.success){closeModal('modal-edit-emp');const re=await api({action:'getEmployees',email:currentEmail});if(re.success){employees=re.employees;renderEmpList();}}
+}
+async function confirmDeleteEmployee(){
+  const id=document.getElementById('edit-emp-id').value;
+  if(!confirm('Deactivate this employee?'))return;
+  const r=await api({action:'deleteEmployee',employeeId:id});
+  showMsg('edit-emp-msg',r.success?r.message:r.error,r.success?'s':'e');
+  if(r.success){closeModal('modal-edit-emp');const re=await api({action:'getEmployees',email:currentEmail});if(re.success){employees=re.employees;renderEmpList();}}
+}
+
+// ===== SCHEDULE ADMIN =====
+async function loadAdminSchedule(){
+  const empId=document.getElementById('sch-emp-sel').value;
+  const month=document.getElementById('sch-month').value;
+  if(!empId||!month)return;
+  document.getElementById('sch-table-wrap').classList.add('hidden');
+  document.getElementById('bulk-wrap').classList.add('hidden');
+
+  const emp=employees.find(e=>e.ID===empId);
+  const info=document.getElementById('sch-emp-info');
+  if(emp){info.textContent='Editing schedule for: '+emp.Name+' — '+new Date(month+'-01').toLocaleDateString('en-IN',{month:'long',year:'numeric'});info.classList.remove('hidden');}
+
+  // Build bulk pickers
+  buildTimePicker('bulk-start-picker','09:00');buildTimePicker('bulk-end-picker','18:00');
+  document.querySelectorAll('#dow-grid .dow-btn').forEach(b=>b.classList.add('selected'));
+
+  const r=await api({action:'getSchedule',employeeId:empId,month});
+  if(!r.success){toast('Could not load schedule');return;}
+  scheduleCache[empId+'_'+month]=r.schedule;
+  renderAdminSchTable(r.schedule,empId,month);
+  document.getElementById('sch-table-wrap').classList.remove('hidden');
+}
+
+function renderAdminSchTable(schedule,empId,month){
+  const [yr,mo]=month.split('-').map(Number);
+  const daysInMo=new Date(yr,mo,0).getDate();
+  const today=todayStr();
+  let rows='';
+  for(let d=1;d<=daysInMo;d++){
+    const ds=yr+'-'+String(mo).padStart(2,'0')+'-'+String(d).padStart(2,'0');
+    const dow=new Date(yr,mo-1,d).getDay();
+    const dayName=fmtDayShort(ds);
+    const sch=schedule.find(s=>s.Date&&s.Date.toString().substring(0,10)===ds);
+    const dt=sch?sch.DayType:(dow===0?'W/O':'Working');
+    const ss=sch?sch.ShiftStart||'':'';
+    const se=sch?sch.ShiftEnd||'':'';
+    const notes=sch?sch.Notes||'':'';
+    const night=isNightShift(ss,se);
+    const isTd=ds===today;
+    const rowBg=isTd?'background:#FFFDE7':dow===0?'background:#fafafa':'';
+    const typeBadge=dt==='W/O'?'<span class="sch-badge sch-wo">W/O</span>':dt==='Holiday'?'<span class="sch-badge sch-holiday">Holiday</span>':'<span class="sch-badge sch-working">Working</span>';
+    const startDisp=ss?fmt24toAMPM(ss):'<span style="color:var(--text3)">—</span>';
+    const endDisp=se?fmt24toAMPM(se)+(night?' <span class="night-tag">+1</span>':''):'<span style="color:var(--text3)">—</span>';
+    const safeNotes=notes.replace(/"/g,'&quot;').replace(/'/g,'&#39;');
+    rows+=`<tr style="${rowBg}">
+      <td style="font-weight:600;color:${isTd?'var(--amber)':'var(--text2)'}">${dayName}${isTd?' ★':''}</td>
+      <td><strong>${d}</strong></td>
+      <td>${typeBadge}</td>
+      <td>${startDisp}</td>
+      <td>${endDisp}</td>
+      <td style="font-size:11px;color:var(--text3);max-width:80px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${notes}</td>
+      <td><button class="btn-action btn-small btn-warning" onclick="openDayEdit('${ds}','${dt}','${ss}','${se}','${safeNotes}')">Edit</button></td>
+    </tr>`;
+  }
+  document.getElementById('sch-table-body').innerHTML=rows;
+  document.getElementById('sch-table-title').textContent=(employees.find(e=>e.ID===empId)?.Name||'')+' — '+new Date(month+'-01').toLocaleDateString('en-IN',{month:'long',year:'numeric'});
+}
+
+function openDayEdit(date,type,shiftStart,shiftEnd,notes){
+  document.getElementById('modal-day-date').textContent=fmtDate(date)+' ('+fmtDayShort(date)+')';
+  document.getElementById('modal-day-type').value=type||'Working';
+  buildTimePicker('modal-start-picker',shiftStart||'09:00');
+  buildTimePicker('modal-end-picker',shiftEnd||'18:00');
+  document.getElementById('modal-day-notes').value=notes||'';
+  selectedDayData={date};
+  toggleModalShift();
+  showMsg('modal-save-msg','','');
+  openModal('modal-day');
+  // Attach night shift detector
+  setTimeout(()=>{
+    ['modal-start-picker','modal-end-picker'].forEach(id=>{
+      document.getElementById(id).querySelectorAll('select').forEach(s=>{
+        s.onchange=()=>checkNightNotice('modal-start-picker','modal-end-picker','modal-night-notice');
+      });
+    });
+  },100);
+}
+
+async function saveDaySchedule(){
+  const empId=document.getElementById('sch-emp-sel').value;
+  const date=selectedDayData.date;
+  const dayType=document.getElementById('modal-day-type').value;
+  const shiftStart=dayType==='Working'?getTimePicker('modal-start-picker'):'';
+  const shiftEnd=dayType==='Working'?getTimePicker('modal-end-picker'):'';
+  const notes=document.getElementById('modal-day-notes').value;
+  if(!empId||!date){showMsg('modal-save-msg','No employee or date selected.','e');return;}
+  const btn=document.getElementById('btn-save-day');
+  btn.disabled=true;btn.innerHTML='<span class="loader"></span>Saving…';
+  const r=await api({action:'saveSchedule',employeeId:empId,date,dayType,shiftStart,shiftEnd,notes});
+  btn.disabled=false;btn.innerHTML='Save Changes';
+  if(!r.success){showMsg('modal-save-msg',r.error,'e');return;}
+  showMsg('modal-save-msg','✓ Saved!','s');
+  // Update cache immediately
+  const cKey=empId+'_'+document.getElementById('sch-month').value;
+  if(scheduleCache[cKey]){
+    const idx=scheduleCache[cKey].findIndex(s=>s.Date&&s.Date.toString().substring(0,10)===date);
+    const entry={EmployeeID:empId,Date:date,DayType:dayType,ShiftStart:shiftStart,ShiftEnd:shiftEnd,Notes:notes};
+    if(idx>=0)scheduleCache[cKey][idx]=entry;else scheduleCache[cKey].push(entry);
+    renderAdminSchTable(scheduleCache[cKey],empId,document.getElementById('sch-month').value);
+  }
+  setTimeout(()=>closeModal('modal-day'),800);
+}
+
+// BULK SCHEDULE
+function toggleDow(btn){btn.classList.toggle('selected');}
+function toggleBulkShift(){const t=document.getElementById('bulk-daytype').value;document.getElementById('bulk-shift-fields').style.display=t==='Working'?'block':'none';}
+
+async function submitBulkSchedule(){
+  const empId=document.getElementById('sch-emp-sel').value;
+  const month=document.getElementById('sch-month').value;
+  const dayType=document.getElementById('bulk-daytype').value;
+  const shiftStart=dayType==='Working'?getTimePicker('bulk-start-picker'):'';
+  const shiftEnd=dayType==='Working'?getTimePicker('bulk-end-picker'):'';
+  const selectedDows=[...document.querySelectorAll('#dow-grid .dow-btn.selected')].map(b=>b.dataset.dow).join(',');
+  if(!empId||!month){showMsg('bulk-msg','Select employee and month.','e');return;}
+  if(!selectedDows){showMsg('bulk-msg','Select at least one day of week.','e');return;}
+  if(!confirm('Apply '+dayType+(shiftStart?' ('+fmt24toAMPM(shiftStart)+' – '+fmt24toAMPM(shiftEnd)+')':'')+' to all selected weekdays in '+month+'?'))return;
+  showMsg('bulk-msg','<span class="loader loader-green"></span>Applying…','i');
+  const r=await api({action:'saveBulkSchedule',employeeId:empId,month,dayType,shiftStart,shiftEnd,daysOfWeek:selectedDows});
+  showMsg('bulk-msg',r.success?r.message:r.error,r.success?'s':'e');
+  if(r.success){await loadAdminSchedule();}
+}
+
+// ===== ADMINS =====
+async function loadAdmins(){
+  const r=await api({action:'getAdmins'});const el=document.getElementById('admin-list');
+  if(!r.success||!r.admins.length){el.innerHTML='<div class="no-data">No admins found</div>';return;}
+  el.innerHTML=r.admins.map(a=>`<div class="invite-chip"><div>
+    <div style="font-weight:600;font-size:14px">${a.Name||a.Email}</div>
+    <div style="font-size:12px;color:var(--text3)">${a.Email}</div></div>
+    ${a.Email==='subhashkumar@trio-ev.com'?'<span class="badge badge-present">Primary</span>':`<button class="btn-action btn-danger btn-small" onclick="revokeAdmin('${a.Email}')">Revoke</button>`}
+  </div>`).join('');
+}
+async function sendInvite(){
+  const email=document.getElementById('invite-email').value.trim(),name=document.getElementById('invite-name').value.trim();
+  if(!email){showMsg('invite-msg','Email is required.','e');return;}
+  const r=await api({action:'sendAdminInvite',inviteeEmail:email,inviteeName:name,inviterEmail:currentEmail});
+  showMsg('invite-msg',r.success?r.message:r.error,r.success?'s':'e');
+  if(r.success){document.getElementById('invite-email').value='';document.getElementById('invite-name').value='';loadAdmins();}
+}
+async function revokeAdmin(email){
+  if(!confirm('Revoke admin access for '+email+'?'))return;
+  const r=await api({action:'removeAdmin',email,requestedBy:currentEmail});
+  toast(r.success?'Admin access revoked.':r.error);if(r.success)loadAdmins();
+}
+
+// ===== SETTINGS =====
+async function loadSettings(){
+  const r=await api({action:'getConfig'});
+  if(r.success){
+    document.getElementById('cfg-lat').textContent=r.config.office_lat||'22.586993';
+    document.getElementById('cfg-lng').textContent=r.config.office_lng||'88.494433';
+    document.getElementById('cfg-radius').textContent=(r.config.office_radius||500)+' m';
+    document.getElementById('inp-radius').value=r.config.office_radius||500;
+    if(r.config.office_lat)officeLat=parseFloat(r.config.office_lat);
+    if(r.config.office_lng)officeLng=parseFloat(r.config.office_lng);
+    if(r.config.office_radius)officeRadius=parseInt(r.config.office_radius);
+  }
+}
+async function setOfficeLocation(){
+  const btn=document.getElementById('btn-set-loc');btn.disabled=true;btn.innerHTML='<span class="loader"></span>Getting GPS…';
+  if(!navigator.geolocation){showMsg('loc-cfg-msg','GPS not available.','e');btn.disabled=false;btn.innerHTML='📍 Set to My GPS';return;}
+  navigator.geolocation.getCurrentPosition(async pos=>{
+    const lat=pos.coords.latitude.toFixed(6),lng=pos.coords.longitude.toFixed(6);
+    await api({action:'saveConfig',key:'office_lat',value:lat});
+    await api({action:'saveConfig',key:'office_lng',value:lng});
+    officeLat=parseFloat(lat);officeLng=parseFloat(lng);
+    document.getElementById('cfg-lat').textContent=lat;
+    document.getElementById('cfg-lng').textContent=lng;
+    btn.disabled=false;btn.innerHTML='📍 Set to My GPS';
+    showMsg('loc-cfg-msg','Office location updated to '+lat+', '+lng,'s');
+  },()=>{btn.disabled=false;btn.innerHTML='📍 Set to My GPS';showMsg('loc-cfg-msg','Could not get GPS.','e');});
+}
+async function saveRadius(){
+  const val=parseInt(document.getElementById('inp-radius').value);
+  if(!val||val<50){showMsg('loc-cfg-msg','Enter a valid radius (min 50m).','e');return;}
+  await api({action:'saveConfig',key:'office_radius',value:val});
+  officeRadius=val;document.getElementById('cfg-radius').textContent=val+' m';
+  showMsg('loc-cfg-msg','Radius updated to '+val+'m','s');
+}
+async function testAutoCheckout(){
+  showMsg('auto-co-msg','<span class="loader loader-green"></span>Running…','i');
+  const r=await api({action:'runAutoCheckout'});
+  showMsg('auto-co-msg',r.success?r.message:r.error,r.success?'s':'e');
+}
+function checkInviteToken(){
+  const token=new URLSearchParams(window.location.search).get('invite');if(!token)return;
+  api({action:'acceptAdminInvite',token}).then(r=>{if(r.success)toast('Admin access granted! Sign in with '+r.email);window.history.replaceState({},'',window.location.pathname);});
+}
+
+// ===== UTILS =====
+function statusBadge(s){
+  if(!s)return'partial';const l=s.toLowerCase();
+  if(l.includes('present'))return'present';
+  if(l.includes('late'))return'late';
+  if(l.includes('absent'))return'absent';
+  if(l.includes('auto'))return'auto';
+  if(l.includes('override')||l.includes('admin'))return'override';
+  if(l.includes('partial')||l.includes('in office'))return'partial';
+  if(l==='w/o'||l==='off')return'wo';
+  return'partial';
+}
+
+// ===== INIT =====
+window.addEventListener('DOMContentLoaded',()=>{
+  const e=document.getElementById('login-err');if(e){e.textContent='';e.classList.add('hidden');}
+  if(new URLSearchParams(window.location.search).get('invite'))checkInviteToken();
+  document.getElementById('emp-hist-month').value=currentMonth();
+  document.getElementById('emp-sch-month').value=currentMonth();
+});
+</script>
+</body>
+</html>
