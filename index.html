@@ -472,6 +472,17 @@ table.data-tbl{width:100%;border-collapse:collapse;font-size:12px;min-width:500p
         <div class="rec-row"><span>Check-in window</span><span style="font-weight:600">Shift start → +30 min</span></div>
         <div class="rec-row"><span>After grace</span><span style="font-weight:600;color:var(--red)">Admin override only</span></div>
       </div>
+      <div class="card">
+        <div class="card-title">🔧 Schedule Data Tools</div>
+        <p style="font-size:13px;color:var(--text3);margin-bottom:12px">Use these if schedule data is corrupted or showing old seeded values.</p>
+        <div style="display:flex;flex-direction:column;gap:8px">
+          <button class="btn-action btn-warning" onclick="runFixTimes()">Fix Time Formats (NaN issue)</button>
+          <button class="btn-action btn-warning" onclick="runCleanupDupes()">Remove Duplicate Rows</button>
+          <button class="btn-action btn-danger" onclick="runResetSchedule()">⚠ Clear All Schedule Data</button>
+        </div>
+        <div id="tools-msg" style="margin-top:10px"></div>
+        <p style="font-size:11px;color:var(--text3);margin-top:8px">After clearing, set each employee's schedule individually from the Schedules tab.</p>
+      </div>
     </div>
   </div>
 </div>
@@ -1249,6 +1260,26 @@ async function testAutoCheckout(){
 function checkInviteToken(){
   const token=new URLSearchParams(window.location.search).get('invite');if(!token)return;
   api({action:'acceptAdminInvite',token}).then(r=>{if(r.success)toast('Admin access granted! Sign in with '+r.email);window.history.replaceState({},'',window.location.pathname);});
+}
+
+// ===== SCHEDULE TOOLS =====
+async function runFixTimes(){
+  showMsg('tools-msg','<span class="loader loader-green"></span> Running…','i');
+  const r=await api({action:'fixScheduleTimes'});
+  showMsg('tools-msg',r.success?'✓ Fixed '+r.fixed+' rows. Reload the Schedules tab to see changes.':r.error,r.success?'s':'e');
+}
+async function runCleanupDupes(){
+  showMsg('tools-msg','<span class="loader loader-green"></span> Running…','i');
+  const r=await api({action:'cleanupSchedules'});
+  showMsg('tools-msg',r.success?'✓ Removed '+r.deleted+' duplicate rows.':r.error,r.success?'s':'e');
+}
+async function runResetSchedule(){
+  if(!confirm('⚠ This will DELETE all schedule data for all employees.\n\nYou will need to set each employee\'s schedule again from scratch.\n\nAre you sure?')) return;
+  if(!confirm('Last chance — this cannot be undone. Confirm clear?')) return;
+  showMsg('tools-msg','<span class="loader loader-green"></span> Clearing…','i');
+  const r=await api({action:'resetScheduleSheet'});
+  showMsg('tools-msg',r.success?'✓ Schedule cleared. Now go to Schedules tab and set each employee.':r.error,r.success?'s':'e');
+  if(r.success){ scheduleCache={}; }
 }
 
 // ===== UTILS =====
