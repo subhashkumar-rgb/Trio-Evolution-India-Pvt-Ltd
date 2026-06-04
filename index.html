@@ -309,7 +309,12 @@ table.data-tbl{width:100%;border-collapse:collapse;font-size:12px;min-width:500p
 
     <!-- DASHBOARD -->
     <div id="atab-dashboard" class="screen">
-      <div class="filter-row"><input type="month" id="dash-month" onchange="loadDashboard()" /></div>
+      <div class="filter-row">
+        <input type="month" id="dash-month" onchange="loadDashboard()" />
+        <select id="dash-emp-filter" onchange="loadDashboard()" style="flex:1;min-width:130px">
+          <option value="">All Employees</option>
+        </select>
+      </div>
       <div class="stat-grid" id="dash-stats"></div>
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px" id="perf-cards"></div>
       <div class="card"><div class="card-title">Present vs Absent</div><div id="chart-present"></div></div>
@@ -561,11 +566,14 @@ function api(params) {
 // ===== TIME HELPERS =====
 // Parse "HH:MM" (24h) → { h12, min, ampm }
 function parse24(t) {
-  if (!t) return { h12:9, min:0, ampm:'AM' };
-  const [h, m] = t.split(':').map(Number);
+  if (!t || typeof t !== 'string' || !t.includes(':')) return { h12:9, min:0, ampm:'AM' };
+  const parts = t.trim().split(':');
+  const h = parseInt(parts[0], 10);
+  const m = parseInt(parts[1], 10);
+  if (isNaN(h) || isNaN(m)) return { h12:9, min:0, ampm:'AM' };
   const ampm = h < 12 ? 'AM' : 'PM';
-  const h12 = h === 0 ? 12 : h > 12 ? h-12 : h;
-  return { h12, min:m, ampm };
+  const h12  = h === 0 ? 12 : h > 12 ? h - 12 : h;
+  return { h12, min: m, ampm };
 }
 // Convert h12 + ampm → HH:MM 24h
 function to24(h12, min, ampm) {
@@ -834,12 +842,17 @@ async function loadEmpSchedule(){
   for(let d=1;d<=daysInMo;d++){
     const ds=yr+'-'+String(mo).padStart(2,'0')+'-'+String(d).padStart(2,'0');
     const sch=r.schedule.find(s=>s.Date&&s.Date.toString().substring(0,10)===ds);
-    const dt=sch?sch.DayType:(new Date(yr,mo-1,d).getDay()===0?'W/O':'Working');
+    // No assumption — show only what admin has set for this employee
+    const dt=sch?sch.DayType:'';
     const ss=sch?sch.ShiftStart||'':'';const se=sch?sch.ShiftEnd||'':'';
     const night=isNightShift(ss,se);
     const isTd=ds===today;
     const cls=isTd?'today-row':dt==='W/O'?'wo-row':'';
-    const dtBadge=dt==='W/O'?'<span class="sch-badge sch-wo">W/O</span>':dt==='Holiday'?'<span class="sch-badge sch-holiday">Holiday</span>':'<span class="sch-badge sch-working">Work</span>';
+    let dtBadge;
+    if(!sch||!dt) dtBadge='<span style="color:#ccc;font-size:11px">—</span>';
+    else if(dt==='W/O') dtBadge='<span class="sch-badge sch-wo">W/O</span>';
+    else if(dt==='Holiday') dtBadge='<span class="sch-badge sch-holiday">Holiday</span>';
+    else dtBadge='<span class="sch-badge sch-working">Work</span>';
     html+=`<tr class="${cls}"><td>${fmtDayShort(ds)}${isTd?' ★':''}</td><td>${d}</td><td>${dtBadge}</td>
     <td>${ss?fmt24toAMPM(ss):'—'}</td><td>${se?fmt24toAMPM(se)+(night?' <span class="night-tag">+1</span>':''):'—'}</td></tr>`;
   }
@@ -857,10 +870,11 @@ async function loadAdminInit(){
   loadDashboard();
 }
 function populateEmpDropdowns(){
-  ['filt-att-emp','override-emp','sch-emp-sel'].forEach(id=>{
+  ['filt-att-emp','override-emp','sch-emp-sel','dash-emp-filter'].forEach(id=>{
     const sel=document.getElementById(id);if(!sel)return;
-    const prev=sel.value,isF=id==='filt-att-emp';
-    sel.innerHTML=isF?'<option value="">All Employees</option>':'';
+    const prev=sel.value;
+    const needsAll=id==='filt-att-emp'||id==='dash-emp-filter';
+    sel.innerHTML=needsAll?'<option value="">All Employees</option>':'';
     employees.forEach(e=>{sel.innerHTML+=`<option value="${e.ID}">${e.Name}</option>`;});
     if(prev)sel.value=prev;
   });
@@ -878,47 +892,91 @@ function adminTab(name,el){
 
 // ===== DASHBOARD =====
 async function loadDashboard(){
-  const month=document.getElementById('dash-month').value;
+  const month   = document.getElementById('dash-month').value;
+  const filterEmpId = (document.getElementById('dash-emp-filter')||{}).value || '';
   document.getElementById('dash-stats').innerHTML='<div class="no-data"><span class="loader loader-green"></span></div>';
-  const r=await api({action:'getDashboard',month,adminEmail:currentEmail});
+  const r = await api({action:'getDashboard', month, adminEmail:currentEmail});
   if(!r.success){document.getElementById('dash-stats').innerHTML='<div class="no-data">'+(r.error||'Failed')+'</div>';return;}
-  const tp=(r.todayStats||[]).filter(t=>t.status==='Present').length;
-  const ti=(r.todayStats||[]).filter(t=>t.status==='In Office').length;
-  const ta=(r.todayStats||[]).filter(t=>t.status==='Absent').length;
+
+  // Apply employee filter
+  let stats      = r.stats      || [];
+  let todayStats = r.todayStats || [];
+  if(filterEmpId){
+    stats      = stats.filter(s => s.id === filterEmpId);
+    todayStats = todayStats.filter(t => t.id === filterEmpId);
+  }
+
+  const tp = todayStats.filter(t=>t.status==='Present').length;
+  const ti = todayStats.filter(t=>t.status==='In Office').length;
+  const ta = todayStats.filter(t=>t.status==='Absent').length;
+
   document.getElementById('dash-stats').innerHTML=`
-    <div class="stat-card"><div class="stat-label">Total Employees</div><div class="stat-val">${r.stats.length}</div></div>
+    <div class="stat-card"><div class="stat-label">Showing</div><div class="stat-val" style="font-size:16px">${filterEmpId?(employees.find(e=>e.ID===filterEmpId)||{}).Name||'—':'All Employees'}</div></div>
     <div class="stat-card"><div class="stat-label">Present Today</div><div class="stat-val green">${tp}</div></div>
     <div class="stat-card"><div class="stat-label">In Office</div><div class="stat-val amber">${ti}</div></div>
     <div class="stat-card"><div class="stat-label">Absent Today</div><div class="stat-val red">${ta}</div></div>`;
+
+  // Top/worst — only show if there is actual attendance data (score > 0)
   const ph=[];
-  if(r.top)ph.push(`<div class="card perf-card"><div style="font-size:11px;font-weight:700;color:var(--green)">⭐ TOP PERFORMER</div>
-    <div style="display:flex;gap:10px;align-items:center"><div class="perf-badge" style="background:var(--green-pale);color:var(--green)">${initials(r.top.name)}</div>
-    <div><div style="font-weight:600">${r.top.name}</div><div style="font-size:18px;font-weight:700;color:var(--green)">${r.top.score}</div>
-    <div style="font-size:11px;color:var(--text3)">${r.top.attendancePct}% present · ${r.top.punctualityPct}% on time</div></div></div></div>`);
-  if(r.worst&&r.worst.id!==r.top?.id)ph.push(`<div class="card perf-card"><div style="font-size:11px;font-weight:700;color:var(--red)">⚠ NEEDS ATTENTION</div>
-    <div style="display:flex;gap:10px;align-items:center"><div class="perf-badge" style="background:var(--red-light);color:var(--red)">${initials(r.worst.name)}</div>
-    <div><div style="font-weight:600">${r.worst.name}</div><div style="font-size:18px;font-weight:700;color:var(--red)">${r.worst.score}</div>
-    <div style="font-size:11px;color:var(--text3)">${r.worst.attendancePct}% present · ${r.worst.punctualityPct}% on time</div></div></div></div>`);
+  const withData = stats.filter(s=>s.score>0||s.presentDays>0);
+  if(withData.length>0){
+    const sorted=[...withData].sort((a,b)=>b.score-a.score);
+    const top=sorted[0], worst=sorted[sorted.length-1];
+    ph.push(`<div class="card perf-card"><div style="font-size:11px;font-weight:700;color:var(--green);margin-bottom:6px">⭐ TOP PERFORMER</div>
+      <div style="display:flex;gap:10px;align-items:center">
+        <div class="perf-badge" style="background:var(--green-pale);color:var(--green)">${initials(top.name)}</div>
+        <div><div style="font-weight:600">${top.name}</div>
+        <div style="font-size:20px;font-weight:700;color:var(--green)">${top.score}</div>
+        <div style="font-size:11px;color:var(--text3)">${top.attendancePct}% present · ${top.punctualityPct}% on time</div></div>
+      </div></div>`);
+    if(worst&&worst.id!==top.id)
+      ph.push(`<div class="card perf-card"><div style="font-size:11px;font-weight:700;color:var(--red);margin-bottom:6px">⚠ NEEDS ATTENTION</div>
+        <div style="display:flex;gap:10px;align-items:center">
+          <div class="perf-badge" style="background:var(--red-light);color:var(--red)">${initials(worst.name)}</div>
+          <div><div style="font-weight:600">${worst.name}</div>
+          <div style="font-size:20px;font-weight:700;color:var(--red)">${worst.score}</div>
+          <div style="font-size:11px;color:var(--text3)">${worst.attendancePct}% present · ${worst.punctualityPct}% on time</div></div>
+        </div></div>`);
+  } else {
+    ph.push(`<div class="card" style="grid-column:span 2;text-align:center;padding:20px;color:var(--text3)">
+      📊 No attendance data yet for this month.<br><small>Performance rankings will appear once employees start checking in.</small>
+    </div>`);
+  }
   document.getElementById('perf-cards').innerHTML=ph.join('');
-  const maxP=Math.max(...r.stats.map(s=>Math.max(s.presentDays,s.absentDays)),1);
-  document.getElementById('chart-present').innerHTML='<div class="chart-bar">'+r.stats.map(s=>`<div class="chart-bar-col">
+  document.getElementById('perf-cards').style.gridTemplateColumns=withData.length>0?'1fr 1fr':'1fr';
+
+  // Charts — filtered
+  const maxP=Math.max(...stats.map(s=>Math.max(s.presentDays,s.absentDays)),1);
+  document.getElementById('chart-present').innerHTML='<div class="chart-bar">'+stats.map(s=>`<div class="chart-bar-col">
     <div class="chart-bar-val">${s.presentDays}</div>
     <div class="chart-bar-fill" style="height:${Math.max(4,s.presentDays/maxP*100)}px;background:var(--green-light)"></div>
     <div class="chart-bar-lbl">${s.name.split(' ')[0]}</div></div>`).join('')+'</div>';
-  const maxL=Math.max(...r.stats.map(s=>s.lateDays),1);
-  document.getElementById('chart-late').innerHTML='<div class="chart-bar">'+r.stats.map(s=>`<div class="chart-bar-col">
+  const maxL=Math.max(...stats.map(s=>s.lateDays),1);
+  document.getElementById('chart-late').innerHTML='<div class="chart-bar">'+stats.map(s=>`<div class="chart-bar-col">
     <div class="chart-bar-val">${s.lateDays}</div>
     <div class="chart-bar-fill" style="height:${Math.max(4,s.lateDays/maxL*100)}px;background:#EF9F27"></div>
     <div class="chart-bar-lbl">${s.name.split(' ')[0]}</div></div>`).join('')+'</div>';
-  document.getElementById('dash-today-list').innerHTML=(r.todayStats||[]).map(t=>{
+
+  // Today's status list — filtered, with shift times
+  document.getElementById('dash-today-list').innerHTML=todayStats.map(t=>{
     const dc=t.status==='Present'?'dot-green':t.status==='In Office'?'dot-amber':'dot-red';
-    const shiftTxt=t.shift&&t.shift.start?fmt24toAMPM(t.shift.start)+' – '+fmt24toAMPM(t.shift.end):'';
-    return`<div class="emp-row"><div style="display:flex;align-items:center;gap:10px">
-      <div class="emp-avatar">${initials(t.name)}</div>
-      <div><div class="emp-name">${t.name}</div>
-      <div class="emp-sub">${t.checkIn?fmt(t.checkIn)+(t.checkOut?' → '+fmt(t.checkOut):' (in office)'):'Not checked in'}${shiftTxt?' · '+shiftTxt:''}</div></div>
-    </div><span class="dot ${dc}"></span></div>`;
-  }).join('')||'<div class="no-data">No data for today</div>';
+    const sc=t.status==='Present'?'badge-present':t.status==='In Office'?'badge-partial':'badge-absent';
+    const shiftTxt=t.shift&&t.shift.start&&t.shift.start.includes(':')?
+      fmt24toAMPM(t.shift.start)+' – '+fmt24toAMPM(t.shift.end):'';
+    return`<div class="emp-row">
+      <div style="display:flex;align-items:center;gap:10px">
+        <div class="emp-avatar">${initials(t.name)}</div>
+        <div>
+          <div class="emp-name">${t.name}</div>
+          <div class="emp-sub">
+            ${t.checkIn?fmt(t.checkIn)+(t.checkOut?' → '+fmt(t.checkOut):' (in office)'):'Not checked in'}
+            ${shiftTxt?'<br><small style="color:var(--text3)">Shift: '+shiftTxt+'</small>':''}
+          </div>
+        </div>
+      </div>
+      <span class="badge ${sc}">${t.status}</span>
+    </div>`;
+  }).join('')||'<div class="no-data">No employees match this filter</div>';
 }
 
 // ===== ATTENDANCE =====
@@ -1026,14 +1084,24 @@ function renderAdminSchTable(schedule,empId,month){
     const dow=new Date(yr,mo-1,d).getDay();
     const dayName=fmtDayShort(ds);
     const sch=schedule.find(s=>s.Date&&s.Date.toString().substring(0,10)===ds);
-    const dt=sch?sch.DayType:(dow===0?'W/O':'Working');
+    // No fallback — if no schedule row exists for this employee+day, show as unset
+    const dt=sch?sch.DayType:'';
     const ss=sch?sch.ShiftStart||'':'';
     const se=sch?sch.ShiftEnd||'':'';
     const notes=sch?sch.Notes||'':'';
     const night=isNightShift(ss,se);
     const isTd=ds===today;
-    const rowBg=isTd?'background:#FFFDE7':dow===0?'background:#fafafa':'';
-    const typeBadge=dt==='W/O'?'<span class="sch-badge sch-wo">W/O</span>':dt==='Holiday'?'<span class="sch-badge sch-holiday">Holiday</span>':'<span class="sch-badge sch-working">Working</span>';
+    const rowBg=isTd?'background:#FFFDE7':'';
+    let typeBadge;
+    if(!sch||!dt){
+      typeBadge='<span class="sch-badge" style="background:#f5f5f5;color:#aaa;border:1px dashed #ccc">Not Set</span>';
+    } else if(dt==='W/O'){
+      typeBadge='<span class="sch-badge sch-wo">W/O</span>';
+    } else if(dt==='Holiday'){
+      typeBadge='<span class="sch-badge sch-holiday">Holiday</span>';
+    } else {
+      typeBadge='<span class="sch-badge sch-working">Working</span>';
+    }
     const startDisp=ss?fmt24toAMPM(ss):'<span style="color:var(--text3)">—</span>';
     const endDisp=se?fmt24toAMPM(se)+(night?' <span class="night-tag">+1</span>':''):'<span style="color:var(--text3)">—</span>';
     const safeNotes=notes.replace(/"/g,'&quot;').replace(/'/g,'&#39;');
@@ -1044,7 +1112,7 @@ function renderAdminSchTable(schedule,empId,month){
       <td>${startDisp}</td>
       <td>${endDisp}</td>
       <td style="font-size:11px;color:var(--text3);max-width:80px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${notes}</td>
-      <td><button class="btn-action btn-small btn-warning" onclick="openDayEdit('${ds}','${dt}','${ss}','${se}','${safeNotes}')">Edit</button></td>
+      <td><button class="btn-action btn-small btn-warning" onclick="openDayEdit('${ds}','${dt||'Working'}','${ss}','${se}','${safeNotes}')">Edit</button></td>
     </tr>`;
   }
   document.getElementById('sch-table-body').innerHTML=rows;
